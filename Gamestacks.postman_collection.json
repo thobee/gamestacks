@@ -1,0 +1,330 @@
+{
+  "info": {
+    "name": "Gamestacks API",
+    "description": "Complete endpoint collection for Gamestacks (public, auth, payments, admin).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:3000" },
+    { "key": "EMAIL", "value": "tester@example.com" },
+    { "key": "PASSWORD", "value": "StrongPass123" },
+    { "key": "FULL_NAME", "value": "Test User" },
+    { "key": "USER_ID", "value": "" },
+    { "key": "GAME_ID", "value": "" },
+    { "key": "ADMIN_GAME_ID", "value": "" },
+    { "key": "ORDER_ID", "value": "" },
+    { "key": "PAYSTACK_REFERENCE", "value": "" },
+    { "key": "ADMIN_COOKIE", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health / Quick",
+      "item": [
+        {
+          "name": "GET /api/games",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/games?page=1&limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Has games array', function () { pm.expect(Array.isArray(json.data)).to.be.true; });",
+                  "if (json.data && json.data.length > 0) { pm.collectionVariables.set('GAME_ID', json.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{EMAIL}}\",\n  \"password\": \"{{PASSWORD}}\",\n  \"fullName\": \"{{FULL_NAME}}\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/auth/signup"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Signup status is 201 or 409', function () { pm.expect(pm.response.code).to.be.oneOf([201,409]); });",
+                  "const json = pm.response.json();",
+                  "if (json.user && json.user.id) { pm.collectionVariables.set('USER_ID', json.user.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{EMAIL}}\",\n  \"password\": \"{{PASSWORD}}\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login status 200 or 401', function () { pm.expect(pm.response.code).to.be.oneOf([200,401]); });",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.user && json.user.id) pm.collectionVariables.set('USER_ID', json.user.id);",
+                  "  const setCookie = pm.response.headers.get('set-cookie');",
+                  "  if (setCookie) pm.collectionVariables.set('AUTH_COOKIE', setCookie.split(';')[0]);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Games (Public)",
+      "item": [
+        {
+          "name": "GET /api/games/featured",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/games/featured?limit=6"
+          }
+        },
+        {
+          "name": "GET /api/games/categories",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/games/categories"
+          }
+        },
+        {
+          "name": "GET /api/games/search",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/games/search?q=EA"
+          }
+        },
+        {
+          "name": "GET /api/games/:id",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/games/{{GAME_ID}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "POST /api/cart/add",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{USER_ID}}\",\n  \"gameId\": \"{{GAME_ID}}\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/cart/add"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /api/payments/initialize",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"gameId\": \"{{GAME_ID}}\" }],\n  \"customerEmail\": \"{{EMAIL}}\",\n  \"customerFullName\": \"{{FULL_NAME}}\",\n  \"customerWhatsapp\": \"+2348012345678\",\n  \"deliveryMethod\": \"digital\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/payments/initialize"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Initialize status is 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.orderId) pm.collectionVariables.set('ORDER_ID', json.data.orderId);",
+                  "if (json.data && json.data.reference) pm.collectionVariables.set('PAYSTACK_REFERENCE', json.data.reference);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/payments/verify",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/api/payments/verify?reference={{PAYSTACK_REFERENCE}}"
+          }
+        },
+        {
+          "name": "POST /api/payments/webhook (manual test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              {
+                "key": "x-paystack-signature",
+                "value": "<GENERATED_SIGNATURE>"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"charge.success\",\n  \"data\": {\n    \"reference\": \"{{PAYSTACK_REFERENCE}}\",\n    \"status\": \"success\",\n    \"paid_at\": \"2026-06-23T10:00:00.000Z\",\n    \"metadata\": { \"orderId\": \"{{ORDER_ID}}\" }\n  }\n}"
+            },
+            "url": "{{BASE_URL}}/api/payments/webhook"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin (Protected)",
+      "item": [
+        {
+          "name": "GET /api/admin/analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/analytics"
+          }
+        },
+        {
+          "name": "GET /api/admin/games",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/games?page=1&limit=20"
+          }
+        },
+        {
+          "name": "POST /api/admin/games",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mock Postman Game\",\n  \"description\": \"Created from Postman\",\n  \"price_naira\": 15000,\n  \"category\": \"Action\",\n  \"image_url\": \"https://images.unsplash.com/photo-1542751371-adc38448a05e\",\n  \"download_url\": \"https://example.com/download/mock\",\n  \"system_requirements\": \"8GB RAM, GTX 1050\",\n  \"is_published\": true\n}"
+            },
+            "url": "{{BASE_URL}}/api/admin/games"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create admin game status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('ADMIN_GAME_ID', json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/admin/games/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/games/{{ADMIN_GAME_ID}}"
+          }
+        },
+        {
+          "name": "PUT /api/admin/games/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mock Postman Game (Updated)\",\n  \"price_naira\": 18000,\n  \"is_published\": true\n}"
+            },
+            "url": "{{BASE_URL}}/api/admin/games/{{ADMIN_GAME_ID}}"
+          }
+        },
+        {
+          "name": "DELETE /api/admin/games/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/games/{{ADMIN_GAME_ID}}"
+          }
+        },
+        {
+          "name": "GET /api/admin/orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/orders?page=1&limit=20"
+          }
+        },
+        {
+          "name": "PATCH /api/admin/orders",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{ORDER_ID}}\",\n  \"status\": \"completed\"\n}"
+            },
+            "url": "{{BASE_URL}}/api/admin/orders"
+          }
+        },
+        {
+          "name": "GET /api/admin/users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "{{ADMIN_COOKIE}}" }],
+            "url": "{{BASE_URL}}/api/admin/users"
+          }
+        }
+      ]
+    }
+  ]
+}

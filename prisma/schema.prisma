@@ -1,0 +1,280 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// NextAuth Models
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name                         String?
+  email                        String?       @unique
+  emailVerified                DateTime?
+  image                        String?
+  passwordHash                 String?
+  isAdmin                      Boolean       @default(false)
+  isVerified                   Boolean       @default(false)
+  verificationToken            String?
+  verificationTokenExpiresAt   DateTime?
+  passwordResetToken           String?
+  passwordResetTokenExpiresAt  DateTime?
+  lastLoginAt                  DateTime?
+  createdAt                    DateTime      @default(now())
+  updatedAt                    DateTime      @updatedAt
+  deletedAt                    DateTime?
+  accounts                     Account[]
+  sessions                     Session[]
+  profile                      UserProfile?
+  userGames                    UserGame[]
+  transactions                 Transaction[]
+  orders                       Order[]
+  reviews                      Review[]
+  wishlist                     Wishlist[]
+  cartItems                    CartItem[]
+  auditLogs                    AuditLog[]
+}
+
+model UserProfile {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                  String   @unique @db.ObjectId
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                     String?
+  walletBalance           Int      @default(0) // In kobo
+  totalSpent              Int      @default(0) // In kobo
+  gamesPurchased          Int      @default(0)
+  rating                  Float    @default(0)
+  totalRatings            Int      @default(0)
+  country                 String   @default("NG")
+  phoneNumber             String?
+  whatsappNumber          String?
+  preferredDeliveryMethod String   @default("digital") // digital or home
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model Game {
+  id                        String        @id @default(auto()) @map("_id") @db.ObjectId
+  slug                      String?       @unique
+  title                     String
+  description               String?
+  longDescription           String?
+  // itemType: "game" | "console" | "gamepad" | "disc" | "game-key" | "accessory"
+  itemType                  String        @default("game")
+  category                  String?
+  platform                  String?
+  deliveryType              String?
+  region                    String?
+  genres                    String[]
+  developerName             String?
+  publisherName             String?
+  priceNaira                Int
+  originalPriceNaira        Int?
+  // salePrice: active discounted price in naira (null = no sale)
+  salePrice                 Int?
+  discountPercentage        Int           @default(0)
+  // totalSales: units sold — drives "Best Sellers" collection
+  totalSales                Int           @default(0)
+  coverImageUrl             String?
+  screenshotsUrls           String[]
+  rating                    Float         @default(0)
+  totalRatings              Int           @default(0)
+  downloadsCount            Int           @default(0)
+  fileSizeGb                Float?
+  downloadLink              String?
+  installationGuideUrl      String?
+  systemRequirementsCpu     String?
+  systemRequirementsRam     String?
+  systemRequirementsGpu     String?
+  systemRequirementsStorage String?
+  systemRequirementsOs      String?
+  isPublished               Boolean       @default(false)
+  isFeatured                Boolean       @default(false)
+  isOffline                 Boolean       @default(false)
+  isNew                     Boolean       @default(false)
+  // Admin-curated collection flags
+  editorsChoice             Boolean       @default(false)
+  comingSoon                Boolean       @default(false)
+  staffPick                 Boolean       @default(false)
+  weekendDeal               Boolean       @default(false)
+  releaseDate               DateTime?
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+  deletedAt                 DateTime?
+  userGames                 UserGame[]
+  transactions              Transaction[]
+  orderItems                OrderItem[]
+  reviews                   Review[]
+  wishlist                  Wishlist[]
+  cartItems                 CartItem[]
+}
+
+// Controls which homepage sections are visible and in what order
+model HomepageSection {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  // Unique machine key maps to ?collection= param or special sections
+  key       String   @unique
+  label     String
+  // "automatic" = driven by query | "curated" = admin boolean flags
+  type      String   @default("automatic")
+  isVisible Boolean  @default(true)
+  order     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model UserGame {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String    @db.ObjectId
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId         String    @db.ObjectId
+  game           Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  purchasedAt    DateTime  @default(now())
+  licenseKey     String?
+  deliveryMethod String    @default("digital") // digital or home
+  deliveryStatus String    @default("pending") // pending, delivered, played
+  isFavourite    Boolean   @default(false)
+  hoursPlayed    Int       @default(0)
+  userRating     Float?
+  userReview     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, gameId])
+}
+
+model Transaction {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String    @db.ObjectId
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId              String?   @db.ObjectId
+  game                Game?     @relation(fields: [gameId], references: [id])
+  orderId             String    @unique
+  amountNaira         Int
+  amountKobo          Int
+  paymentMethod       String?
+  paystackReference   String?
+  paystackAccessCode  String?
+  paystackAuthUrl     String?
+  status              String    @default("pending") // pending, success, failed, cancelled
+  transactionType     String? // game_purchase, wallet_topup, refund
+  description         String?
+  metadata            String? // Store as JSON string
+  paidAt              DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Order {
+  id                   String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String      @db.ObjectId
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderNumber          String      @unique
+  itemsCount           Int         @default(1)
+  subtotalNaira        Int
+  transactionFeeNaira  Int         @default(0)
+  totalNaira           Int
+  customerEmail        String
+  customerPhone        String?
+  customerWhatsapp     String?
+  deliveryMethod       String?
+  deliveryAddress      String?
+  status               String      @default("pending")
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  orderItems           OrderItem[]
+}
+
+model OrderItem {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId         String   @db.ObjectId
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gameId          String   @db.ObjectId
+  game            Game     @relation(fields: [gameId], references: [id])
+  gameTitle       String
+  priceAtPurchase Int
+  createdAt       DateTime @default(now())
+}
+
+model Review {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String   @db.ObjectId
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId             String   @db.ObjectId
+  game               Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  rating             Int
+  title              String?
+  content            String?
+  isVerifiedPurchase Boolean  @default(false)
+  helpfulCount       Int      @default(0)
+  unhelpfulCount     Int      @default(0)
+  isApproved         Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, gameId])
+}
+
+model Wishlist {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+}
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now())
+
+  @@unique([userId, gameId])
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?  @db.ObjectId
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String?
+  entityId   String?
+  changes    String? // Stored as JSON string
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
