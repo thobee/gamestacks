@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       if (!wasAlreadySuccessful) {
         const orderWithItems = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { orderItems: true },
+          include: { orderItems: true, user: true },
         });
 
         if (orderWithItems) {
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
           if (issuedKeyItems.length > 0) {
             void notifyCustomerOfKeyDelivery({
               customerEmail: orderWithItems.customerEmail,
-              customerName: orderWithItems.customerFullName,
+              customerName: orderWithItems.user.name || orderWithItems.customerEmail,
               orderNumber: orderWithItems.orderNumber,
               keyItems: issuedKeyItems,
             }).catch((alertError) => {
