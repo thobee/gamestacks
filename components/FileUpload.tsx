@@ -16,9 +16,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useId, useRef, useState } from "react";
-import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
 export type FileUploadStatus = "queued" | "uploading" | "success" | "error";
@@ -66,9 +64,6 @@ export interface FileUploadProps {
   className?: string;
   classNames?: FileUploadClassNames;
 }
-
-const ROW_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const;
-const FAST_TRANSITION = { duration: 0.16, ease: EASE_OUT } as const;
 
 const STATUS_LABEL: Record<FileUploadStatus, string> = {
   queued: "Queued",
@@ -207,49 +202,24 @@ export function createFileUploadItem(file: File, index = 0): FileUploadItem {
 
 function StatusIcon({
   status,
-  reduce,
 }: {
   status: FileUploadStatus;
-  reduce: boolean;
 }) {
   const iconClassName = "h-4 w-4";
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.span
-        key={status}
-        initial={
-          reduce
-            ? { opacity: 0 }
-            : { opacity: 0, transform: "translateY(4px)" }
-        }
-        animate={{ opacity: 1, transform: "translateY(0px)" }}
-        exit={
-          reduce
-            ? { opacity: 0 }
-            : { opacity: 0, transform: "translateY(-4px)" }
-        }
-        transition={FAST_TRANSITION}
-        className={cn("grid h-6 w-6 place-items-center", STATUS_TONE[status])}
-      >
-        {status === "success" ? (
-          <CheckCircle2 className={iconClassName} />
-        ) : status === "error" ? (
-          <AlertCircle className={iconClassName} />
-        ) : status === "uploading" ? (
-          <Loader2
-            className={cn(
-              iconClassName,
-              "animate-spin",
-              reduce && "animate-none",
-            )}
-          />
-        ) : (
-          <FileIcon className={iconClassName} />
-        )}
-        <span className="sr-only">{STATUS_LABEL[status]}</span>
-      </motion.span>
-    </AnimatePresence>
+    <span className={cn("grid h-6 w-6 place-items-center transition-colors duration-150", STATUS_TONE[status])}>
+      {status === "success" ? (
+        <CheckCircle2 className={iconClassName} />
+      ) : status === "error" ? (
+        <AlertCircle className={iconClassName} />
+      ) : status === "uploading" ? (
+        <Loader2 className={cn(iconClassName, "animate-spin")} />
+      ) : (
+        <FileIcon className={iconClassName} />
+      )}
+      <span className="sr-only">{STATUS_LABEL[status]}</span>
+    </span>
   );
 }
 
@@ -264,7 +234,6 @@ function FileUploadRow({
   onRetry: (item: FileUploadItem) => void;
   classNames?: FileUploadClassNames;
 }) {
-  const reduce = useReducedMotion() ?? false;
   const status = item.status ?? "queued";
   const progress = clampProgress(item.progress, status);
   const progressRatio = progress / 100;
@@ -272,18 +241,9 @@ function FileUploadRow({
   const LeadingIcon = getFileIcon(item);
 
   return (
-    <motion.li
-      layout={!reduce}
-      initial={
-        reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(8px)" }
-      }
-      animate={{ opacity: 1, transform: "translateY(0px)" }}
-      exit={
-        reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(-6px)" }
-      }
-      transition={ROW_TRANSITION}
+    <li
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border bg-background p-3",
+        "relative overflow-hidden rounded-2xl border border-border bg-background p-3 transition-all duration-150",
         classNames?.item,
       )}
     >
@@ -320,7 +280,7 @@ function FileUploadRow({
             </div>
 
             <div className="flex shrink-0 items-center gap-1">
-              <StatusIcon status={status} reduce={reduce} />
+              <StatusIcon status={status} />
               {status === "error" ? (
                 <button
                   type="button"
@@ -360,28 +320,20 @@ function FileUploadRow({
                 classNames?.progress,
               )}
             >
-              <motion.div
+              <div
                 className={cn(
-                  "h-full rounded-full",
+                  "h-full rounded-full transition-all duration-300",
                   status === "success"
                     ? "bg-emerald-500"
                     : "bg-foreground",
                 )}
-                style={{
-                  transformOrigin: "left",
-                  transform: reduce ? `scaleX(${progressRatio})` : undefined,
-                }}
-                initial={false}
-                animate={
-                  reduce ? undefined : { transform: `scaleX(${progressRatio})` }
-                }
-                transition={{ duration: 0.28, ease: EASE_OUT }}
+                style={{ width: `${progressRatio * 100}%` }}
               />
             </div>
           ) : null}
         </div>
       </div>
-    </motion.li>
+    </li>
   );
 }
 
@@ -589,17 +541,15 @@ export function FileUpload({
       </button>
 
       <ul className={cn("space-y-2", classNames?.queue)}>
-        <AnimatePresence initial={false}>
-          {items.map((item) => (
-            <FileUploadRow
-              key={item.id}
-              item={item}
-              onRemove={removeItem}
-              onRetry={retryItem}
-              classNames={classNames}
-            />
-          ))}
-        </AnimatePresence>
+        {items.map((item) => (
+          <FileUploadRow
+            key={item.id}
+            item={item}
+            onRemove={removeItem}
+            onRetry={retryItem}
+            classNames={classNames}
+          />
+        ))}
       </ul>
     </div>
   );

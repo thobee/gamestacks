@@ -103,7 +103,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       role="alert"
       onClick={dismiss}
       className={`flex items-center gap-3 px-4.5 py-3.5 bg-white border border-neutral-200/60 border-l-[3.5px] ${borderColors[toast.variant]} rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_6px_rgba(0,0,0,0.04)] cursor-pointer w-full max-w-[400px] pointer-events-auto ${
-        exiting ? "animate-[toastSlideOut_0.32s_cubic-bezier(0.22,1,0.36,1)_forwards]" : "animate-[toastSlideIn_0.32s_cubic-bezier(0.22,1,0.36,1)_both]"
+        exiting ? "animate-[toastSlideOut_0.2s_ease_forwards]" : "animate-[toastSlideIn_0.2s_ease_both]"
       }`}
     >
       <div className="shrink-0 flex">{icons[toast.variant]}</div>

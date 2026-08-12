@@ -132,12 +132,12 @@ export function Navbar() {
     <>
       <style>{`
         @keyframes slideDown {
-          from { opacity:0; transform:translateY(-8px) scale(0.97); }
-          to   { opacity:1; transform:translateY(0)   scale(1); }
+          from { opacity:0; transform:translateY(-8px); }
+          to   { opacity:1; transform:translateY(0); }
         }
         @keyframes modalIn {
-          from { opacity:0; transform:translateY(-12px) scale(0.97); }
-          to   { opacity:1; transform:translateY(0)     scale(1); }
+          from { opacity:0; transform:translateY(-8px); }
+          to   { opacity:1; transform:translateY(0); }
         }
         @keyframes fadeIn {
           from { opacity:0; }
@@ -147,7 +147,7 @@ export function Navbar() {
           border: 1px solid transparent;
           border-radius: 9999px;
           padding: 6px 12px;
-          transition: all 0.18s ease;
+          transition: all 0.15s ease;
         }
       `}</style>
 
@@ -251,7 +251,7 @@ export function Navbar() {
                 </button>
 
                 {isStoreOpen && (
-                  <div className="absolute top-[calc(100%+16px)] -left-3 w-56 z-50 animate-[slideDown_0.17s_cubic-bezier(0.22,1,0.36,1)_both]">
+                  <div className="absolute top-[calc(100%+16px)] -left-3 w-56 z-50 animate-[slideDown_0.12s_ease_both]">
                     <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white border border-black/10 border-r-0 border-b-0 rotate-45 z-0" />
                     <div className="bg-white border border-black/10 rounded-xl p-1.5 shadow-[0_8px_40px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] relative z-10">
                       <p className="px-2.5 pt-2 pb-1 text-xs font-semibold text-[#bbb]">
@@ -338,7 +338,7 @@ export function Navbar() {
                 </button>
 
                 {isGenreOpen && (
-                  <div className="absolute top-[calc(100%+16px)] -left-3 w-50 z-50 animate-[slideDown_0.17s_cubic-bezier(0.22,1,0.36,1)_both]">
+                  <div className="absolute top-[calc(100%+16px)] -left-3 w-50 z-50 animate-[slideDown_0.12s_ease_both]">
                     <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white border border-black/10 border-r-0 border-b-0 rotate-45 z-0" />
                     <div className="bg-white border border-black/10 rounded-xl p-1.5 shadow-[0_8px_40px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] relative z-10">
                       <p className="px-2.5 pt-2 pb-1 text-xs font-semibold text-[#bbb]">
@@ -440,7 +440,7 @@ export function Navbar() {
                   </button>
 
                   {isUserOpen && (
-                    <div className="absolute top-[calc(100%+14px)] right-0 w-55 z-50 animate-[slideDown_0.17s_cubic-bezier(0.22,1,0.36,1)_both]">
+                    <div className="absolute top-[calc(100%+14px)] right-0 w-55 z-50 animate-[slideDown_0.12s_ease_both]">
                       <div className="absolute -top-1.5 right-3 w-3 h-3 bg-white border border-black/10 border-r-0 border-b-0 rotate-45 z-0" />
                       <div className="bg-white border border-black/10 rounded-xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.12)] relative z-10">
                         <div className="px-4 pt-3.5 pb-3 border-b border-black/8 bg-black/3 flex items-center gap-2.5">
@@ -534,7 +534,7 @@ export function Navbar() {
 
         {/* ── MOBILE MENU ── */}
         {isMobileOpen && (
-          <div className="md:hidden bg-white border-t border-black/8 px-4 pt-4 pb-6 animate-[slideDown_0.2s_ease_both]">
+          <div className="md:hidden bg-white border-t border-black/8 px-4 pt-4 pb-6 animate-[slideDown_0.12s_ease_both]">
             <div className="space-y-1 mb-4">
               <p className="text-xs font-semibold text-[#bbb] mb-2 px-1">
                 Store
@@ -625,7 +625,7 @@ export function Navbar() {
             className="fixed inset-0 bg-black/50 backdrop-blur-[6px] animate-[fadeIn_0.18s_ease_both]"
             onClick={() => setIsSearchOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-125 bg-white border border-black/10 rounded-2xl shadow-[0_32px_80px_rgba(0,0,0,0.18)] overflow-hidden animate-[modalIn_0.2s_cubic-bezier(0.22,1,0.36,1)_both]">
+          <div className="relative z-10 w-full max-w-125 bg-white border border-black/10 rounded-2xl shadow-[0_32px_80px_rgba(0,0,0,0.18)] overflow-hidden animate-[modalIn_0.12s_ease_both]">
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-black/8">
               <Search className="w-4 h-4 text-[#aaa] shrink-0" />
               <input

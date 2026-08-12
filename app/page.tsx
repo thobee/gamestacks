@@ -196,10 +196,10 @@ export default function Home() {
         }
         .ticker-track { animation: tickerScroll 28s linear infinite; }
         .kinetic-cat {
-          transition: all 0.25s ease;
+          transition: all 0.2s ease;
         }
         .kinetic-cat:hover .cat-label-arrow { opacity: 1; transform: translateX(0); }
-        .cat-label-arrow { opacity: 0; transform: translateX(-6px); transition: all 0.22s ease; }
+        .cat-label-arrow { opacity: 0; transform: translateX(-6px); transition: all 0.18s ease; }
       `}</style>
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
@@ -207,7 +207,7 @@ export default function Home() {
         {HERO_SLIDES.map((s, i) => (
           <div
             key={i}
-            className={`absolute inset-0 transition-opacity duration-1500 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 transition-opacity duration-800 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
           >
             <Image src={s.image} alt={s.title} fill className="object-cover object-center" priority={i === 0} />
           </div>
@@ -219,7 +219,7 @@ export default function Home() {
 
         {/* Content */}
         <div className="relative z-10 max-w-[1440px] mx-auto px-4 md:px-16 w-full py-20">
-          <div key={currentSlide} className="max-w-xl" style={{ animation: "heroFadeIn 0.65s ease-out forwards" }}>
+          <div key={currentSlide} className="max-w-xl" style={{ animation: "heroFadeIn 0.4s ease-out forwards" }}>
             <span className="inline-block bg-[#111] text-white px-4 py-1.5 text-xs font-semibold mb-5">
               {slide.tag}
             </span>
