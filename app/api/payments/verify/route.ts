@@ -211,7 +211,8 @@ export async function GET(request: NextRequest) {
           if (issuedKeyItems.length > 0) {
             void notifyCustomerOfKeyDelivery({
               customerEmail: orderWithItems.customerEmail,
-              customerName: orderWithItems.user.name || orderWithItems.customerEmail,
+              customerName:
+                orderWithItems.user.name || orderWithItems.customerEmail,
               orderNumber: orderWithItems.orderNumber,
               keyItems: issuedKeyItems,
             }).catch((alertError) => {
