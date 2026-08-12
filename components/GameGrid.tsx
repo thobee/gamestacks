@@ -22,13 +22,14 @@ function GameGridComponent({
     2: "grid-cols-1 sm:grid-cols-2",
     3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
     4: "grid-cols-2 md:grid-cols-2 lg:grid-cols-4",
+    5: "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
   };
 
   const gridClass = colsClass[cols] ?? colsClass[4];
 
   if (loading) {
     return (
-      <div className={`grid gap-4 ${gridClass}`}>
+    <div className={`grid gap-3 ${gridClass}`}>
         {Array.from({ length: cols * 2 }).map((_, i) => (
           <div key={i} className="flex flex-col bg-white border border-[#e5e5e5]" style={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,0.04)" }}>
             {/* Image skeleton */}
@@ -51,13 +52,13 @@ function GameGridComponent({
   if (games.length === 0) {
     return (
       <div className="py-12 text-center">
-        <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#bbb]">No games found</p>
+        <p className="text-sm text-[#6b6b6b]">No games found</p>
       </div>
     );
   }
 
   return (
-    <div className={`grid gap-4 ${gridClass}`}>
+    <div className={`grid gap-3 ${gridClass}`}>
       {games.map((game) => (
         <GameCard
           key={game.id}

@@ -119,7 +119,7 @@ export default function SettingsPage() {
 
         {/* Change Password form — 3 cols */}
         <div className="lg:col-span-3">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="noir-card overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
               <div className="h-7 w-7 rounded-lg bg-gray-900 flex items-center justify-center shrink-0">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
         <div className="lg:col-span-2 space-y-4">
 
           {/* Security tips */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="noir-card overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="text-xs font-semibold text-gray-900">Password Requirements</h3>
             </div>
@@ -196,7 +196,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Quick nav */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="noir-card overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="text-xs font-semibold text-gray-900">Quick Links</h3>
             </div>

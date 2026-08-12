@@ -45,7 +45,7 @@ export function GameFilters({
       {/* Search */}
       {onSearchChange && (
         <div>
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-500">Search</h3>
+          <h3 className="mb-3 text-sm font-bold text-zinc-500">Search</h3>
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500"
@@ -68,7 +68,7 @@ export function GameFilters({
 
       {/* Categories */}
       <div>
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-500">Categories</h3>
+        <h3 className="mb-3 text-sm font-bold text-zinc-500">Categories</h3>
         <div className="space-y-1.5">
           <button
             onClick={() => onCategoryChange(null)}
@@ -98,7 +98,7 @@ export function GameFilters({
 
       {/* Price Filter */}
       <div>
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-500">Price Range</h3>
+        <h3 className="mb-3 text-sm font-bold text-zinc-500">Price Range</h3>
         <div className="space-y-2">
           <Input
             type="number"
@@ -126,7 +126,7 @@ export function GameFilters({
 
       {/* Sort */}
       <div>
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-500">Sort By</h3>
+        <h3 className="mb-3 text-sm font-bold text-zinc-500">Sort By</h3>
         <select
           value={sortBy}
           onChange={(e) => handleSortChange(e.target.value)}

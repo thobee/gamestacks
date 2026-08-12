@@ -1,74 +1,60 @@
 // app/categories/page.tsx
-// Categories Explorer page with custom visual cards
+// Categories Explorer — Kinetic Noir
 
 "use client";
 
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { useCategories } from "@/hooks/useGames";
+import { CATALOG_CATEGORIES } from "@/lib/catalog";
+import { Footer } from "@/components/Footer";
 
 interface CategoryMeta {
   description: string;
-  icon: string;
-  color: string; // border hover / text accent gradient styles
   tagline: string;
 }
 
 const CATEGORY_DETAILS: Record<string, CategoryMeta> = {
-  "PC Offline": {
-    description: "Direct play offline PC games. High compressions, simple installers, no activation needed.",
-    icon: "🖥️",
-    color: "from-green-500/15 to-green-500/5 hover:border-green-500/30 border-green-500/10 text-green-400",
-    tagline: "Unrestricted Offline Play",
+  "PC": {
+    description: "PC games for download and play — offline and online titles.",
+    tagline: "PC Games",
   },
-  "PlayStation": {
-    description: "PlayStation digital games, downloads, account loads, and subscriptions.",
-    icon: "🎮",
-    color: "from-blue-500/15 to-blue-500/5 hover:border-blue-500/30 border-blue-500/10 text-blue-400",
-    tagline: "Console Digital & Loads",
+  "Game Keys Online": {
+    description: "Digital license keys delivered instantly after purchase.",
+    tagline: "Instant Digital Codes",
   },
-  "Action": {
-    description: "Fast-paced adrenaline-pumping shooters, combat games, and adventure quests.",
-    icon: "💥",
-    color: "from-red-500/15 to-red-500/5 hover:border-red-500/30 border-red-500/10 text-red-400",
-    tagline: "Pure Adrenaline & Combat",
-  },
-  "Sports": {
-    description: "Football, basketball, wrestling, and other competitive sports simulations.",
-    icon: "⚽",
-    color: "from-yellow-500/15 to-yellow-500/5 hover:border-yellow-500/30 border-yellow-500/10 text-yellow-400",
-    tagline: "Championship Simulations",
-  },
-  "Racing": {
-    description: "High-octane arcade racers, track simulations, and street drifting games.",
-    icon: "🏎️",
-    color: "from-orange-500/15 to-orange-500/5 hover:border-orange-500/30 border-orange-500/10 text-orange-400",
-    tagline: "Speed & Precision Driving",
-  },
-  "RPG": {
-    description: "Immersive role-playing games with rich story, characters, and open worlds.",
-    icon: "⚔️",
-    color: "from-purple-500/15 to-purple-500/5 hover:border-purple-500/30 border-purple-500/10 text-purple-400",
-    tagline: "Epic Stories & Quests",
-  },
-  "Strategy": {
-    description: "Tactical planning, resource management, and command RTS/turn-based battles.",
-    icon: "🧠",
-    color: "from-cyan-500/15 to-cyan-500/5 hover:border-cyan-500/30 border-cyan-500/10 text-cyan-400",
-    tagline: "Tactical Strategy & Brainpower",
+  "Consoles": {
+    description: "PlayStation, Xbox, Switch and other gaming systems.",
+    tagline: "Console Hardware",
   },
   "Gamepads": {
-    description: "Premium controllers, triggers, and gamepads for high-performance play.",
-    icon: "🕹️",
-    color: "from-emerald-500/15 to-emerald-500/5 hover:border-emerald-500/30 border-emerald-500/10 text-emerald-400",
-    tagline: "Tactile Gaming Hardware",
+    description: "Controllers and gamepads for high-performance play.",
+    tagline: "Tactile Hardware",
+  },
+  "Accessories": {
+    description: "Headsets, cables, stands and gaming peripherals.",
+    tagline: "Gear & Peripherals",
+  },
+  "PlayStation": {
+    description: "PlayStation digital games, accounts, and subscriptions.",
+    tagline: "PS Digital & Loads",
+  },
+  "Xbox": {
+    description: "Xbox games, Game Pass, and console digital content.",
+    tagline: "Xbox Library",
+  },
+  "Nintendo Switch": {
+    description: "Switch physical and digital titles for on-the-go play.",
+    tagline: "Portable Nintendo",
+  },
+  "Other": {
+    description: "Everything else in the Gamestacks catalog.",
+    tagline: "More Collections",
   },
 };
 
 const DEFAULT_META: CategoryMeta = {
-  description: "Explore premium digital items and top-rated games in this category.",
-  icon: "📦",
-  color: "from-zinc-500/15 to-zinc-500/5 hover:border-yellow-400/30 border-slate-800 text-zinc-400",
+  description: "Explore premium digital items and top-rated products in this category.",
   tagline: "Premium Collections",
 };
 
@@ -78,53 +64,42 @@ function CategoriesContent() {
   if (loading) {
     return (
       <div className="py-24 text-center flex flex-col items-center justify-center gap-3">
-        <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-zinc-800 border-t-yellow-400" />
-        <p className="text-sm font-bold uppercase tracking-wider text-zinc-600">Loading Categories...</p>
+        <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#111]" />
+        <p className="text-xs font-medium text-[#999]">Loading Categories...</p>
       </div>
     );
   }
 
-  // Ensure unique list (merge DB categories with our preset metadata categories just in case some aren't seeded yet)
   const allCategoryNames = Array.from(
-    new Set([...categories, ...Object.keys(CATEGORY_DETAILS)])
-  ).filter(cat => cat && cat !== "Featured");
+    new Set([...CATALOG_CATEGORIES, ...categories])
+  ).filter(
+    (cat) =>
+      cat &&
+      cat !== "Featured" &&
+      cat !== "Other" &&
+      cat !== "PC Offline" &&
+      cat !== "PC Online",
+  );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {allCategoryNames.map((catName) => {
         const meta = CATEGORY_DETAILS[catName] || DEFAULT_META;
         return (
           <Link
             key={catName}
             href={`/games?category=${encodeURIComponent(catName)}`}
-            className={`group relative overflow-hidden rounded-2xl border bg-slate-900/40 p-6 flex flex-col justify-between hover:-translate-y-1 transition-all duration-300 shadow-xl ${meta.color.split(" ").slice(0, 3).join(" ")}`}
+            className="group border border-[#e5e5e5] bg-white p-6 hover:border-[#111] transition-all no-underline"
+            style={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,0.04)" }}
           >
-            {/* Ambient Background Gradient for Hover Glow */}
-            <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none ${meta.color.split(" ").slice(0, 2).join(" ")}`} />
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-4xl select-none transition-transform duration-300 group-hover:scale-110 block">
-                  {meta.icon}
-                </span>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400 group-hover:text-yellow-400 transition-colors">
-                  {meta.tagline}
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors">
-                {catName}
-              </h3>
-              <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-                {meta.description}
-              </p>
-            </div>
-
-            <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-yellow-400 group-hover:text-yellow-300 relative z-10">
-              <span>View catalog</span>
-              <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
+            <p className="text-xs font-medium text-[#999] mb-2">{meta.tagline}</p>
+            <h3 className="text-lg font-bold text-[#111] tracking-tight group-hover:opacity-70 transition-opacity">
+              {catName}
+            </h3>
+            <p className="mt-2 text-[13px] text-[#888] leading-relaxed">{meta.description}</p>
+            <p className="mt-4 text-xs font-semibold text-[#111] opacity-0 group-hover:opacity-100 transition-opacity">
+              Browse →
+            </p>
           </Link>
         );
       })}
@@ -134,32 +109,22 @@ function CategoriesContent() {
 
 export default function CategoriesPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative">
-      {/* Radial background glow decoration */}
-      <div className="absolute top-0 left-0 right-0 h-[400px] bg-radial-gradient from-yellow-500/5 via-transparent to-transparent pointer-events-none z-0" />
-
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 relative z-10">
-        <div className="mb-12 text-center max-w-xl mx-auto">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl mb-3">
-            Browse Store <span className="text-yellow-400">Categories</span>
-          </h1>
-          <p className="text-zinc-400 text-sm">
-            Curated platforms, hardware gear, and game genres to match your style of play.
+    <div className="min-h-screen bg-white" style={{ paddingTop: 64 }}>
+      <main className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="block w-0.5 h-4 bg-[#111]" />
+            <h1 className="text-3xl font-bold tracking-tight text-[#111]">Categories</h1>
+          </div>
+          <p className="text-sm text-[#6b6b6b] ml-3">
+            Browse the full Gamestacks catalog by product line
           </p>
         </div>
-
-        <Suspense
-          fallback={
-            <div className="text-center text-zinc-500 py-24 flex flex-col items-center justify-center gap-3">
-              <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-zinc-800 border-t-yellow-400" />
-              <p className="text-sm font-bold uppercase tracking-wider text-zinc-600">Loading catalog...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={null}>
           <CategoriesContent />
         </Suspense>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

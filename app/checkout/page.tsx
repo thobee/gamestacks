@@ -1,13 +1,14 @@
 // app/checkout/page.tsx
-// Secure Checkout — matches GameHubNG reference design
+// Secure Checkout — Kinetic Noir design, Paystack payment
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { formatNaira } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 type DeliveryMethod = "digital" | "home";
 
@@ -16,12 +17,17 @@ interface FormData {
   email: string;
   whatsapp: string;
   deliveryMethod: DeliveryMethod;
+  address: string;
+  city: string;
+  state: string;
 }
 
 interface FormErrors {
   fullName?: string;
   email?: string;
-  whatsapp?: string;
+  address?: string;
+  city?: string;
+  state?: string;
 }
 
 function validate(form: FormData): FormErrors {
@@ -32,37 +38,70 @@ function validate(form: FormData): FormErrors {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
     errors.email = "Enter a valid email address";
   }
+  if (form.deliveryMethod === "home") {
+    if (!form.address.trim()) errors.address = "Delivery address is required";
+    if (!form.city.trim()) errors.city = "City is required";
+    if (!form.state.trim()) errors.state = "State is required";
+  }
   return errors;
+}
+
+/** Effective price: use salePrice when set and lower than priceNaira */
+function effectiveItemPrice(item: any): number {
+  const price = item.game?.priceNaira ?? 0;
+  const sale = item.game?.salePrice;
+  if (sale != null && sale > 0 && sale < price) return sale;
+  return price;
 }
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { items, clearCart } = useCart();
+  const { data: session, status: authStatus } = useSession();
 
   const [form, setForm] = useState<FormData>({
     fullName: "",
     email: "",
     whatsapp: "",
     deliveryMethod: "digital",
+    address: "",
+    city: "",
+    state: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const subtotal = getTotalPrice();
-  const transactionFee = 0;
-  const total = subtotal + transactionFee;
+  // Pre-fill from session
+  useEffect(() => {
+    if (session?.user) {
+      setForm(prev => ({
+        ...prev,
+        fullName: prev.fullName || session.user?.name || "",
+        email: prev.email || session.user?.email || "",
+      }));
+    }
+  }, [session]);
+
+  const subtotal = items.reduce((total, item) => total + effectiveItemPrice(item), 0);
+  const total = subtotal;
 
   const handleChange = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError(null);
+
+    // Auth gate
+    if (!session) {
+      router.push("/auth/login?callbackUrl=/checkout");
+      return;
+    }
 
     const validationErrors = validate(form);
     if (Object.keys(validationErrors).length) {
@@ -78,55 +117,53 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      const deliveryAddress = form.deliveryMethod === "home"
+        ? `${form.address}, ${form.city}, ${form.state}, Nigeria`
+        : undefined;
+
       const response = await fetch("/api/payments/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((item) => ({ gameId: item.gameId })),
+          items: items.map(item => ({ gameId: item.gameId })),
           customerFullName: form.fullName.trim(),
           customerEmail: form.email.trim().toLowerCase(),
           customerWhatsapp: form.whatsapp.trim() || undefined,
           deliveryMethod: form.deliveryMethod,
+          deliveryAddress,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setServerError(
-          data.error?.message || "Something went wrong. Please try again.",
-        );
+        setServerError(data.error?.message || "Something went wrong. Please try again.");
+        setIsSubmitting(false);
         return;
       }
 
-      // Redirect to Paystack hosted payment page
+      // Clear cart AFTER we have the authorization URL to prevent data loss on failure
       clearCart();
       window.location.href = data.data.authorizationUrl;
     } catch {
-      setServerError(
-        "Network error. Please check your connection and try again.",
-      );
-    } finally {
+      setServerError("Network error. Please check your connection and try again.");
       setIsSubmitting(false);
     }
   };
 
-  // Redirect to games if cart empty
+  // Empty cart — redirect to games
   if (items.length === 0 && !isSubmitting) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0D0D0D]">
-        <div className="text-center">
-          <p className="mb-2 text-6xl">🛒</p>
-          <h2 className="mb-2 text-2xl font-black text-white">
-            Your cart is empty
-          </h2>
-          <p className="mb-6 text-gray-400">
-            Add some games before checking out.
-          </p>
-          <Link
-            href="/games"
-            className="rounded-full bg-yellow-400 px-8 py-3 font-black uppercase tracking-wide text-black hover:bg-yellow-300 transition-colors"
-          >
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center" style={{ paddingTop: 64 }}>
+        <div className="text-center px-6">
+          <div className="w-16 h-16 border-2 border-[#e5e5e5] flex items-center justify-center mx-auto mb-6">
+            <svg className="w-7 h-7 text-[#bbb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+          <h2 className="mb-2 text-2xl font-bold text-[#111]">Your cart is empty</h2>
+          <p className="mb-8 text-[#999] text-sm">Add some games before checking out.</p>
+          <Link href="/games" className="inline-block bg-[#111] text-white px-8 py-3.5 font-bold text-sm hover:bg-neutral-800 transition-all active:scale-[0.98]">
             Browse Games
           </Link>
         </div>
@@ -134,434 +171,253 @@ export default function CheckoutPage() {
     );
   }
 
+  // Auth prompt if not signed in
+  if (authStatus === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center" style={{ paddingTop: 64 }}>
+        <div className="text-center px-6 max-w-sm">
+          <div className="w-16 h-16 border-2 border-[#111] flex items-center justify-center mx-auto mb-6">
+            <svg className="w-7 h-7 text-[#111]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-[#111] mb-2">Sign in to checkout</h2>
+          <p className="text-[#999] text-sm mb-8">You need an account to complete your purchase.</p>
+          <Link href="/auth/login?callbackUrl=/checkout" className="block bg-[#111] text-white px-8 py-3.5 font-bold text-sm hover:bg-neutral-800 transition-all active:scale-[0.98]">
+            Sign In
+          </Link>
+          <Link href="/auth/signup?callbackUrl=/checkout" className="block mt-3 border-2 border-[#111] text-[#111] px-8 py-3.5 font-bold text-sm hover:bg-[#111] hover:text-white transition-all active:scale-[0.98]">
+            Create Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const inputCls = "w-full border border-[#e5e5e5] bg-[#f8f9fa] px-4 py-3 text-sm text-[#111] placeholder-[#ccc] outline-none transition-colors focus:border-[#111]";
+  const errorInput = "border-red-400 bg-red-50";
+  const labelCls = "block text-xs font-semibold text-[#777] mb-1.5";
+
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white">
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#111111]">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-black text-yellow-400">
-              Gamestacks
-            </Link>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-              Secure Checkout
-            </div>
+    <div className="min-h-screen bg-white text-[#111]" style={{ paddingTop: 64 }}>
+
+      {/* Nav bar override for checkout context */}
+      <div className="border-b border-[#e5e5e5] bg-white">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-4 flex items-center justify-between">
+          <Link href="/" className="text-[15px] font-bold tracking-tight">Gamestacks</Link>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-[#999]">
+            <svg className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Secure Checkout
           </div>
         </div>
-      </nav>
+      </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Page title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-yellow-400">
-            Secure Checkout
-          </h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Complete your purchase to start playing immediately.
-          </p>
-        </div>
+      <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-12">
+        <h1 className="text-3xl font-bold tracking-tight mb-1">Checkout</h1>
+        <p className="text-sm text-[#999] mb-10">Complete your purchase below</p>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* ── Left column ──────────────────────── */}
+
+            {/* ── Left: Form ── */}
             <div className="space-y-6 lg:col-span-2">
-              {/* Server error */}
+
               {serverError && (
-                <div className="rounded-xl border border-red-500/50 bg-red-900/20 p-4 text-sm text-red-300">
+                <div className="border border-red-200 bg-red-50 p-4 text-sm text-red-600 font-semibold">
                   {serverError}
                 </div>
               )}
 
-              {/* Customer Information */}
-              <section className="rounded-xl border border-[#2A2A2A] bg-[#111111] p-6">
-                <h2 className="mb-5 flex items-center gap-2 text-base font-black text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-yellow-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                  Customer Information
-                </h2>
-
+              {/* Customer info */}
+              <section className="border border-[#e5e5e5] p-6">
+                <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#ebebeb]">
+                  <span className="block w-0.5 h-3.5 bg-[#111] rounded-full" />
+                  <h2 className="text-sm font-bold">Customer Information</h2>
+                </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={form.fullName}
-                      onChange={(e) => handleChange("fullName", e.target.value)}
-                      className={`w-full rounded-lg border bg-[#1A1A1A] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 ${
-                        errors.fullName ? "border-red-500" : "border-[#3A3A3A]"
-                      }`}
-                    />
-                    {errors.fullName && (
-                      <p className="mt-1 text-xs text-red-400">
-                        {errors.fullName}
-                      </p>
-                    )}
+                    <label className={labelCls}>Full Name</label>
+                    <input type="text" placeholder="Your full name" value={form.fullName} onChange={e => handleChange("fullName", e.target.value)}
+                      className={`${inputCls} ${errors.fullName ? errorInput : ""}`} />
+                    {errors.fullName && <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>}
                   </div>
-
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={form.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      className={`w-full rounded-lg border bg-[#1A1A1A] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 ${
-                        errors.email ? "border-red-500" : "border-[#3A3A3A]"
-                      }`}
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-xs text-red-400">
-                        {errors.email}
-                      </p>
-                    )}
+                    <label className={labelCls}>Email Address</label>
+                    <input type="email" placeholder="email@example.com" value={form.email} onChange={e => handleChange("email", e.target.value)}
+                      className={`${inputCls} ${errors.email ? errorInput : ""}`} />
+                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                   </div>
                 </div>
-
                 <div className="mt-4">
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    WhatsApp Number{" "}
-                    <span className="text-gray-600">(optional)</span>
-                  </label>
+                  <label className={labelCls}>WhatsApp Number <span className="text-[#ccc] font-normal">(optional)</span></label>
                   <div className="flex">
-                    <span className="flex items-center rounded-l-lg border border-r-0 border-[#3A3A3A] bg-[#222] px-3 text-sm text-gray-400">
-                      +234
-                    </span>
-                    <input
-                      type="tel"
-                      placeholder="8012345678"
-                      value={form.whatsapp}
-                      onChange={(e) => handleChange("whatsapp", e.target.value)}
-                      className="flex-1 rounded-r-lg border border-[#3A3A3A] bg-[#1A1A1A] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30"
-                    />
+                    <span className="flex items-center border border-r-0 border-[#e5e5e5] bg-[#f0f0f0] px-3 text-sm text-[#888] font-bold">+234</span>
+                    <input type="tel" placeholder="8012345678" value={form.whatsapp} onChange={e => handleChange("whatsapp", e.target.value)}
+                      className={`flex-1 ${inputCls}`} />
                   </div>
                 </div>
               </section>
 
-              {/* Delivery Selection */}
-              <section className="rounded-xl border border-[#2A2A2A] bg-[#111111] p-6">
-                <h2 className="mb-5 flex items-center gap-2 text-base font-black text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-yellow-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.4 4.2A2 2 0 008.3 14H16a2 2 0 001.9-1.4L19 8"
-                    />
-                  </svg>
-                  Delivery Selection
-                </h2>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* Digital */}
-                  <label
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${
-                      form.deliveryMethod === "digital"
-                        ? "border-yellow-400 bg-yellow-400/5"
-                        : "border-[#2A2A2A] hover:border-[#3A3A3A]"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="delivery"
-                      value="digital"
-                      checked={form.deliveryMethod === "digital"}
-                      onChange={() => handleChange("deliveryMethod", "digital")}
-                      className="mt-0.5 accent-yellow-400"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-yellow-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                        <p className="font-bold text-white">Digital Instant</p>
-                      </div>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        Delivered via Email/WhatsApp
-                      </p>
-                    </div>
-                  </label>
-
-                  {/* Home Delivery */}
-                  <label
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${
-                      form.deliveryMethod === "home"
-                        ? "border-yellow-400 bg-yellow-400/5"
-                        : "border-[#2A2A2A] hover:border-[#3A3A3A]"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="delivery"
-                      value="home"
-                      checked={form.deliveryMethod === "home"}
-                      onChange={() => handleChange("deliveryMethod", "home")}
-                      className="mt-0.5 accent-yellow-400"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                          />
-                        </svg>
-                        <p className="font-bold text-white">Home Delivery</p>
-                      </div>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        Physical copy (2–5 business days)
-                      </p>
-                    </div>
-                  </label>
+              {/* Delivery method */}
+              <section className="border border-[#e5e5e5] p-6">
+                <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#ebebeb]">
+                  <span className="block w-0.5 h-3.5 bg-[#111] rounded-full" />
+                  <h2 className="text-sm font-bold">Delivery Method</h2>
                 </div>
-              </section>
-
-              {/* Payment Method */}
-              <section className="rounded-xl border border-[#2A2A2A] bg-[#111111] p-6">
-                <h2 className="mb-5 flex items-center gap-2 text-base font-black text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-yellow-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                  Payment Method
-                </h2>
-
-                {/* Paystack — only active option */}
-                <div className="flex items-center justify-between rounded-xl border-2 border-yellow-400 bg-yellow-400/5 px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-yellow-400 bg-yellow-400">
-                      <div className="h-1.5 w-1.5 rounded-full bg-black" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-white">Paystack</p>
-                      <p className="text-xs text-gray-400">
-                        Cards, USSD, Bank Transfer
-                      </p>
-                    </div>
-                  </div>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                </div>
-                <p className="mt-3 text-xs text-gray-500">
-                  You will be redirected to Paystack&apos;s secure payment page
-                  to complete your purchase.
-                </p>
-              </section>
-            </div>
-
-            {/* ── Order Summary (right column) ─────── */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 rounded-xl border border-[#2A2A2A] bg-[#111111] p-6">
-                <h2 className="mb-5 text-base font-black text-white">
-                  Order Summary
-                </h2>
-
-                {/* Cart items */}
-                <div className="mb-5 max-h-64 space-y-3 overflow-y-auto">
-                  {items.map((item) => (
-                    <div key={item.gameId} className="flex items-center gap-3">
-                      <div className="h-12 w-10 shrink-0 overflow-hidden rounded bg-[#2A2A2A]">
-                        <img
-                          src={
-                            item.game.coverImageUrl ||
-                            "https://placehold.co/40x48/2a2a2a/555?text=G"
-                          }
-                          alt={item.game.title}
-                          className="h-full w-full object-cover"
-                        />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {[
+                    { value: "digital", label: "Digital Instant", desc: "Via Email / WhatsApp" },
+                    { value: "home",    label: "Home Delivery",   desc: "Physical (2–5 business days)" },
+                  ].map(opt => (
+                    <label key={opt.value}
+                      className={`flex cursor-pointer items-start gap-3 border-2 p-4 transition-all ${
+                        form.deliveryMethod === opt.value ? "border-[#111] bg-[#f8f9fa]" : "border-[#e5e5e5] hover:border-[#999]"
+                      }`}
+                    >
+                      <input type="radio" name="delivery" value={opt.value}
+                        checked={form.deliveryMethod === opt.value}
+                        onChange={() => handleChange("deliveryMethod", opt.value)}
+                        className="mt-0.5 accent-[#111]"
+                      />
+                      <div>
+                        <p className="font-bold text-sm text-[#111]">{opt.label}</p>
+                        <p className="mt-0.5 text-xs text-[#999]">{opt.desc}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">
-                          {item.game.title}
-                        </p>
-                        <span className="inline-block rounded bg-green-900/40 px-1.5 py-0.5 text-[10px] font-bold text-green-400">
-                          IN STOCK
-                        </span>
-                      </div>
-                      <p className="shrink-0 text-sm font-bold text-yellow-400">
-                        {formatNaira(item.game.priceNaira)}
-                      </p>
-                    </div>
+                    </label>
                   ))}
                 </div>
 
-                <div className="border-t border-[#2A2A2A] pt-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-gray-400">
-                      <span>Subtotal</span>
-                      <span>{formatNaira(subtotal)}</span>
+                {/* Address fields — visible only for home delivery */}
+                {form.deliveryMethod === "home" && (
+                  <div className="mt-5 space-y-4 border-t border-[#ebebeb] pt-5">
+                    <p className="text-xs font-semibold text-[#bbb]">Delivery Address</p>
+                    <div>
+                      <label className={labelCls}>Street Address *</label>
+                      <textarea rows={2} placeholder="Street address, house number..." value={form.address} onChange={e => handleChange("address", e.target.value)}
+                        className={`${inputCls} resize-none ${errors.address ? errorInput : ""}`} />
+                      {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
                     </div>
-                    <div className="flex justify-between text-gray-400">
-                      <span>Transaction Fee</span>
-                      <span>
-                        {transactionFee === 0
-                          ? "Free"
-                          : formatNaira(transactionFee)}
-                      </span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>City *</label>
+                        <input type="text" placeholder="City" value={form.city} onChange={e => handleChange("city", e.target.value)}
+                          className={`${inputCls} ${errors.city ? errorInput : ""}`} />
+                        {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city}</p>}
+                      </div>
+                      <div>
+                        <label className={labelCls}>State *</label>
+                        <input type="text" placeholder="State" value={form.state} onChange={e => handleChange("state", e.target.value)}
+                          className={`${inputCls} ${errors.state ? errorInput : ""}`} />
+                        {errors.state && <p className="mt-1 text-xs text-red-500">{errors.state}</p>}
+                      </div>
                     </div>
-                    <div className="flex justify-between border-t border-[#2A2A2A] pt-2 text-base font-black">
-                      <span className="text-white">Total</span>
-                      <span className="text-yellow-400">
-                        {formatNaira(total)}
-                      </span>
+                  </div>
+                )}
+              </section>
+
+              {/* Payment method */}
+              <section className="border border-[#e5e5e5] p-6">
+                <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#ebebeb]">
+                  <span className="block w-0.5 h-3.5 bg-[#111] rounded-full" />
+                  <h2 className="text-sm font-bold">Payment Method</h2>
+                </div>
+                <div className="flex items-center justify-between border-2 border-[#111] bg-[#f8f9fa] px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-[#111] bg-[#111]">
+                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
                     </div>
+                    <div>
+                      <p className="font-bold text-sm text-[#111]">Paystack</p>
+                      <p className="text-xs text-[#999]">Cards, USSD, Bank Transfer</p>
+                    </div>
+                  </div>
+                  <svg className="h-5 w-5 text-[#bbb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <p className="mt-3 text-[11px] text-[#bbb]">You&apos;ll be redirected to Paystack&apos;s secure page to complete payment.</p>
+              </section>
+            </div>
+
+            {/* ── Right: Order Summary ── */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 border border-[#e5e5e5] p-6" style={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,0.04)" }}>
+                <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#ebebeb]">
+                  <span className="block w-0.5 h-3.5 bg-[#111] rounded-full" />
+                  <h2 className="text-sm font-bold">Order Summary</h2>
+                </div>
+
+                {/* Cart items */}
+                <div className="mb-5 max-h-64 space-y-3 overflow-y-auto">
+                  {items.map(item => {
+                    const price = effectiveItemPrice(item);
+                    const original = item.game?.priceNaira;
+                    const hasDiscount = item.game?.salePrice != null && item.game.salePrice < original;
+                    return (
+                      <div key={item.gameId} className="flex items-center gap-3">
+                        <div className="h-12 w-10 shrink-0 overflow-hidden border border-[#e5e5e5]">
+                          <img
+                            src={item.game.coverImageUrl || "https://placehold.co/40x48/f5f5f5/999?text=G"}
+                            alt={item.game.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-sm font-bold text-[#111]">{item.game.title}</p>
+                          <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold border border-[#e5e5e5] text-[#999]">
+                            In Stock
+                          </span>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold text-[#111]">{formatNaira(price)}</p>
+                          {hasDiscount && (
+                            <p className="text-xs text-[#bbb] line-through">{formatNaira(original)}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-[#e5e5e5] pt-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-[#999]">
+                    <span>Subtotal</span>
+                    <span>{formatNaira(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-[#999]">
+                    <span>Transaction Fee</span>
+                    <span>Free</span>
+                  </div>
+                  <div className="flex justify-between border-t border-[#e5e5e5] pt-3 text-base font-bold">
+                    <span>Total</span>
+                    <span>{formatNaira(total)}</span>
                   </div>
                 </div>
 
-                {/* Place Order CTA */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="mt-5 w-full rounded-xl bg-yellow-400 py-4 font-black uppercase tracking-widest text-black transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-gray-600 disabled:text-gray-400"
+                  disabled={isSubmitting || authStatus === "loading"}
+                  className="mt-5 w-full bg-[#111] text-white py-4 font-bold text-sm transition-all hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-white" />
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       Processing...
                     </span>
-                  ) : (
-                    "Place Order →"
-                  )}
+                  ) : "Place Order →"}
                 </button>
 
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3.5 w-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#bbb] font-medium">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   Secure Encrypted Payment
                 </p>
-
-                {/* Trust badges */}
-                <div className="mt-4 flex justify-center gap-6 border-t border-[#2A2A2A] pt-4">
-                  <div className="flex flex-col items-center gap-1">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-green-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                    <span className="text-[10px] font-bold text-gray-500">
-                      VERIFIED
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-yellow-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
-                    <span className="text-[10px] font-bold text-gray-500">
-                      24/7 CARE
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
+
           </div>
         </form>
       </div>

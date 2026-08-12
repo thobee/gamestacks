@@ -19,7 +19,7 @@ export default function CartPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#0D0D0D]">
         <div className="text-center">
           <p className="mb-2 text-6xl">🛒</p>
-          <h2 className="mb-2 text-2xl font-black text-white">
+          <h2 className="mb-2 text-2xl font-bold text-white">
             Your cart is empty
           </h2>
           <p className="mb-6 text-gray-400">
@@ -27,7 +27,7 @@ export default function CartPage() {
           </p>
           <Link
             href="/games"
-            className="rounded-full bg-yellow-400 px-8 py-3 font-black uppercase tracking-wide text-black hover:bg-yellow-300 transition-colors"
+            className="rounded-full bg-yellow-400 px-8 py-3 font-bold text-sm text-black hover:bg-yellow-300 transition-colors"
           >
             Browse Games
           </Link>
@@ -42,7 +42,7 @@ export default function CartPage() {
       <nav className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#111111]">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-black text-yellow-400">
+            <Link href="/" className="text-xl font-bold text-yellow-400">
               Gamestacks
             </Link>
             <Link
@@ -56,7 +56,7 @@ export default function CartPage() {
       </nav>
 
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="mb-2 text-3xl font-black text-white">Your Cart</h1>
+        <h1 className="mb-2 text-3xl font-bold text-white">Your Cart</h1>
         <p className="mb-8 text-sm text-gray-400">
           {count} item{count !== 1 ? "s" : ""}
         </p>
@@ -88,7 +88,7 @@ export default function CartPage() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-black text-yellow-400">
+                  <p className="font-bold text-yellow-400">
                     {formatNaira(item.game.priceNaira)}
                   </p>
                   <button
@@ -105,7 +105,7 @@ export default function CartPage() {
           {/* Summary */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 rounded-xl border border-[#2A2A2A] bg-[#111111] p-6">
-              <h2 className="mb-5 text-base font-black text-white">
+              <h2 className="mb-5 text-base font-bold text-white">
                 Order Summary
               </h2>
               <div className="space-y-2 text-sm">
@@ -117,14 +117,14 @@ export default function CartPage() {
                   <span>Transaction Fee</span>
                   <span>Free</span>
                 </div>
-                <div className="flex justify-between border-t border-[#2A2A2A] pt-3 text-base font-black">
+                <div className="flex justify-between border-t border-[#2A2A2A] pt-3 text-base font-bold">
                   <span className="text-white">Total</span>
                   <span className="text-yellow-400">{formatNaira(total)}</span>
                 </div>
               </div>
               <Link
                 href="/checkout"
-                className="mt-5 block w-full rounded-xl bg-yellow-400 py-4 text-center font-black uppercase tracking-widest text-black hover:bg-yellow-300 transition-colors"
+                className="mt-5 block w-full rounded-xl bg-yellow-400 py-4 text-center font-bold text-sm text-black hover:bg-yellow-300 transition-colors"
               >
                 Proceed to Checkout →
               </Link>

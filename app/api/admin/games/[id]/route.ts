@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, mapGameToResponse } from "@/lib/prisma";
 import { generateUniqueSlug } from "@/lib/slug-generator";
+import { calcDiscountPercentage } from "@/lib/utils";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  _request: NextRequest,
-  context: RouteContext,
-) {
+export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
 
@@ -35,10 +33,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext,
-) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const body = await request.json();
@@ -47,18 +42,29 @@ export async function PUT(
     const { id: _id, created_at: _ca, ...updates } = body;
 
     const resolvedPrice =
-      updates.priceNaira !== undefined ? updates.priceNaira : updates.price_naira;
+      updates.priceNaira !== undefined
+        ? updates.priceNaira
+        : updates.price_naira;
     const resolvedCoverImage = updates.coverImageUrl || updates.image_url;
     const resolvedDownloadLink = updates.downloadLink || updates.download_url;
     const resolvedIsPublished =
-      updates.isPublished !== undefined ? updates.isPublished : updates.is_published;
+      updates.isPublished !== undefined
+        ? updates.isPublished
+        : updates.is_published;
     const resolvedIsFeatured =
-      updates.isFeatured !== undefined ? updates.isFeatured : updates.is_featured;
+      updates.isFeatured !== undefined
+        ? updates.isFeatured
+        : updates.is_featured;
 
     if (resolvedPrice !== undefined) {
       if (typeof resolvedPrice !== "number" || resolvedPrice < 0) {
         return NextResponse.json(
-          { error: { code: "INVALID_PRICE", message: "price_naira must be a non-negative number" } },
+          {
+            error: {
+              code: "INVALID_PRICE",
+              message: "price_naira must be a non-negative number",
+            },
+          },
           { status: 422 },
         );
       }
@@ -66,7 +72,12 @@ export async function PUT(
 
     if (updates.title !== undefined && updates.title.length > 200) {
       return NextResponse.json(
-        { error: { code: "INVALID_TITLE", message: "Title must be 200 characters or fewer" } },
+        {
+          error: {
+            code: "INVALID_TITLE",
+            message: "Title must be 200 characters or fewer",
+          },
+        },
         { status: 422 },
       );
     }
@@ -77,41 +88,104 @@ export async function PUT(
       dataUpdate.title = updates.title.trim();
       dataUpdate.slug = await generateUniqueSlug(dataUpdate.title, prisma, id);
     }
-    if (updates.description !== undefined) dataUpdate.description = updates.description.trim();
-    if (updates.longDescription !== undefined) dataUpdate.longDescription = updates.longDescription.trim();
-    if (updates.category !== undefined)    dataUpdate.category = updates.category.trim();
-    if (resolvedPrice !== undefined)       dataUpdate.priceNaira = Math.round(resolvedPrice);
-    if (resolvedCoverImage !== undefined)  dataUpdate.coverImageUrl = resolvedCoverImage;
-    if (resolvedDownloadLink !== undefined) dataUpdate.downloadLink = resolvedDownloadLink;
-    if (resolvedIsPublished !== undefined) dataUpdate.isPublished = resolvedIsPublished;
-    if (resolvedIsFeatured !== undefined)  dataUpdate.isFeatured = resolvedIsFeatured;
+    if (updates.description !== undefined)
+      dataUpdate.description = updates.description.trim();
+    if (updates.longDescription !== undefined)
+      dataUpdate.longDescription = updates.longDescription.trim();
+    if (updates.category !== undefined)
+      dataUpdate.category = updates.category.trim();
+    if (resolvedPrice !== undefined)
+      dataUpdate.priceNaira = Math.round(resolvedPrice);
+    if (resolvedCoverImage !== undefined)
+      dataUpdate.coverImageUrl = resolvedCoverImage;
+    if (resolvedDownloadLink !== undefined)
+      dataUpdate.downloadLink = resolvedDownloadLink;
+    if (resolvedIsPublished !== undefined)
+      dataUpdate.isPublished = resolvedIsPublished;
+    if (resolvedIsFeatured !== undefined)
+      dataUpdate.isFeatured = resolvedIsFeatured;
 
     // New fields
-    if (updates.genres !== undefined)               dataUpdate.genres = Array.isArray(updates.genres) ? updates.genres : [];
-    if (updates.itemType !== undefined)             dataUpdate.itemType = updates.itemType;
-    if (updates.platform !== undefined)             dataUpdate.platform = updates.platform;
-    if (updates.deliveryType !== undefined)         dataUpdate.deliveryType = updates.deliveryType;
-    if (updates.region !== undefined)               dataUpdate.region = updates.region;
-    if (updates.screenshotsUrls !== undefined)      dataUpdate.screenshotsUrls = Array.isArray(updates.screenshotsUrls) ? updates.screenshotsUrls : [];
-    if (updates.salePrice !== undefined)            dataUpdate.salePrice = updates.salePrice !== null ? Math.round(updates.salePrice) : null;
-    if (updates.originalPriceNaira !== undefined)   dataUpdate.originalPriceNaira = updates.originalPriceNaira !== null ? Math.round(updates.originalPriceNaira) : null;
-    if (updates.discountPercentage !== undefined)   dataUpdate.discountPercentage = updates.discountPercentage;
-    if (updates.totalSales !== undefined)           dataUpdate.totalSales = updates.totalSales;
-    if (updates.editorsChoice !== undefined)        dataUpdate.editorsChoice = updates.editorsChoice;
-    if (updates.comingSoon !== undefined)           dataUpdate.comingSoon = updates.comingSoon;
-    if (updates.staffPick !== undefined)            dataUpdate.staffPick = updates.staffPick;
-    if (updates.weekendDeal !== undefined)          dataUpdate.weekendDeal = updates.weekendDeal;
-    if (updates.isNew !== undefined)                dataUpdate.isNew = updates.isNew;
-    if (updates.isOffline !== undefined)            dataUpdate.isOffline = updates.isOffline;
-    if (updates.developerName !== undefined)        dataUpdate.developerName = updates.developerName;
-    if (updates.publisherName !== undefined)        dataUpdate.publisherName = updates.publisherName;
-    if (updates.fileSizeGb !== undefined)           dataUpdate.fileSizeGb = updates.fileSizeGb;
-    if (updates.system_requirements !== undefined)  dataUpdate.systemRequirementsCpu = updates.system_requirements;
-    if (updates.systemRequirementsCpu !== undefined)     dataUpdate.systemRequirementsCpu = updates.systemRequirementsCpu;
-    if (updates.systemRequirementsRam !== undefined)     dataUpdate.systemRequirementsRam = updates.systemRequirementsRam;
-    if (updates.systemRequirementsGpu !== undefined)     dataUpdate.systemRequirementsGpu = updates.systemRequirementsGpu;
-    if (updates.systemRequirementsStorage !== undefined) dataUpdate.systemRequirementsStorage = updates.systemRequirementsStorage;
-    if (updates.systemRequirementsOs !== undefined)      dataUpdate.systemRequirementsOs = updates.systemRequirementsOs;
+    if (updates.genres !== undefined)
+      dataUpdate.genres = Array.isArray(updates.genres) ? updates.genres : [];
+    if (updates.itemType !== undefined) dataUpdate.itemType = updates.itemType;
+    if (updates.platform !== undefined) dataUpdate.platform = updates.platform;
+    if (updates.deliveryType !== undefined)
+      dataUpdate.deliveryType = updates.deliveryType;
+    if (updates.region !== undefined) dataUpdate.region = updates.region;
+    if (updates.screenshotsUrls !== undefined)
+      dataUpdate.screenshotsUrls = Array.isArray(updates.screenshotsUrls)
+        ? updates.screenshotsUrls
+        : [];
+    if (updates.salePrice !== undefined)
+      dataUpdate.salePrice =
+        updates.salePrice !== null ? Math.round(updates.salePrice) : null;
+    if (updates.originalPriceNaira !== undefined)
+      dataUpdate.originalPriceNaira =
+        updates.originalPriceNaira !== null
+          ? Math.round(updates.originalPriceNaira)
+          : null;
+
+    // Keep discount % in sync when price or sale price changes
+    const nextPrice =
+      resolvedPrice !== undefined
+        ? Math.round(resolvedPrice)
+        : undefined;
+    const nextSale =
+      updates.salePrice !== undefined
+        ? updates.salePrice !== null
+          ? Math.round(updates.salePrice)
+          : null
+        : undefined;
+
+    if (updates.discountPercentage !== undefined) {
+      dataUpdate.discountPercentage = updates.discountPercentage;
+    } else if (nextPrice !== undefined || nextSale !== undefined) {
+      const existing = await prisma.game.findUnique({
+        where: { id },
+        select: { priceNaira: true, salePrice: true },
+      });
+      const priceForDiscount = nextPrice ?? existing?.priceNaira ?? 0;
+      const saleForDiscount =
+        nextSale !== undefined ? nextSale : (existing?.salePrice ?? null);
+      dataUpdate.discountPercentage = calcDiscountPercentage(
+        priceForDiscount,
+        saleForDiscount,
+      );
+    }
+    if (updates.totalSales !== undefined)
+      dataUpdate.totalSales = updates.totalSales;
+    if (updates.editorsChoice !== undefined)
+      dataUpdate.editorsChoice = updates.editorsChoice;
+    if (updates.comingSoon !== undefined)
+      dataUpdate.comingSoon = updates.comingSoon;
+    if (updates.staffPick !== undefined)
+      dataUpdate.staffPick = updates.staffPick;
+    if (updates.weekendDeal !== undefined)
+      dataUpdate.weekendDeal = updates.weekendDeal;
+    if (updates.isNew !== undefined) dataUpdate.isNew = updates.isNew;
+    if (updates.isOffline !== undefined)
+      dataUpdate.isOffline = updates.isOffline;
+    if (updates.developerName !== undefined)
+      dataUpdate.developerName = updates.developerName;
+    if (updates.publisherName !== undefined)
+      dataUpdate.publisherName = updates.publisherName;
+    if (updates.fileSizeGb !== undefined)
+      dataUpdate.fileSizeGb = updates.fileSizeGb;
+    if (updates.installationGuideUrl !== undefined)
+      dataUpdate.installationGuideUrl = updates.installationGuideUrl;
+    if (updates.system_requirements !== undefined)
+      dataUpdate.systemRequirementsCpu = updates.system_requirements;
+    if (updates.systemRequirementsCpu !== undefined)
+      dataUpdate.systemRequirementsCpu = updates.systemRequirementsCpu;
+    if (updates.systemRequirementsRam !== undefined)
+      dataUpdate.systemRequirementsRam = updates.systemRequirementsRam;
+    if (updates.systemRequirementsGpu !== undefined)
+      dataUpdate.systemRequirementsGpu = updates.systemRequirementsGpu;
+    if (updates.systemRequirementsStorage !== undefined)
+      dataUpdate.systemRequirementsStorage = updates.systemRequirementsStorage;
+    if (updates.systemRequirementsOs !== undefined)
+      dataUpdate.systemRequirementsOs = updates.systemRequirementsOs;
 
     const game = await prisma.game.update({
       where: { id },
@@ -134,10 +208,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  context: RouteContext,
-) {
+export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
 

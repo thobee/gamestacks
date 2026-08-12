@@ -8,6 +8,7 @@ import { useHomepageSections } from "@/hooks/useHomepageSections";
 import { useCollection } from "@/hooks/useCollection";
 import { GameGrid } from "@/components/GameGrid";
 import { HomepageSection, Game } from "@/lib/types";
+import { Footer } from "@/components/Footer";
 
 /* ── Hero slides ─────────────────────────────────────────────────────── */
 const HERO_SLIDES = [
@@ -85,10 +86,10 @@ const TRUST_FEATURES = [
 
 /* ── Category grid ──────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { name: "PC Games",     sub: "Offline & Online Access",   href: "/games?category=PC+Offline",  dark: true  },
-  { name: "PlayStation",  sub: "Consoles & Digital Codes",  href: "/games?category=PlayStation",  dark: false },
-  { name: "Gamepads",     sub: "Wired & Wireless",          href: "/games?category=Gamepads",     dark: true  },
-  { name: "Accessories",  sub: "Headsets & More",           href: "/games?category=Accessories",  dark: false },
+  { name: "PC Games",           sub: "Download & play",           href: "/games?category=PC",               dark: true  },
+  { name: "Game Keys Online",   sub: "Digital license codes",     href: "/games?category=Game+Keys+Online",  dark: false },
+  { name: "Gamepads",           sub: "Wired & Wireless",          href: "/games?category=Gamepads",          dark: true  },
+  { name: "Accessories",        sub: "Headsets & More",           href: "/games?category=Accessories",       dark: false },
 ];
 
 /* ── Why us ──────────────────────────────────────────────────────────── */
@@ -137,31 +138,31 @@ function CollectionSection({
       {/* Section header */}
       <div className="flex justify-between items-end border-b border-black/10 pb-4 mb-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-[#111] uppercase">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#111]">
             {section.label}
           </h2>
           {subtitleMap[section.key] && (
-            <p className="text-[11px] mt-1 text-[#999] font-bold uppercase tracking-[0.08em]">
+            <p className="text-xs mt-1 text-[#999] font-medium">
               {subtitleMap[section.key]}
             </p>
           )}
         </div>
         <Link
           href={`/games?collection=${section.key}`}
-          className="hidden md:inline-flex items-center gap-1 text-[11px] font-black text-[#111] uppercase tracking-[0.08em] hover:opacity-50 transition-opacity no-underline"
+          className="hidden md:inline-flex items-center gap-1 text-xs font-semibold text-[#111] hover:opacity-50 transition-opacity no-underline"
         >
-          VIEW ALL <span className="text-sm ml-0.5">→</span>
+          View all <span className="text-sm ml-0.5">→</span>
         </Link>
       </div>
 
-      <GameGrid games={games} onAddToCart={onAddToCart} cols={4} loading={loading} />
+      <GameGrid games={games} onAddToCart={onAddToCart} cols={5} loading={loading} />
 
       <div className="text-center mt-6 md:hidden">
         <Link
           href={`/games?collection=${section.key}`}
-          className="inline-flex items-center gap-1 text-[11px] font-black text-[#111] uppercase tracking-[0.08em] no-underline"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#111] no-underline"
         >
-          VIEW ALL →
+          View all →
         </Link>
       </div>
     </section>
@@ -206,7 +207,7 @@ export default function Home() {
         {HERO_SLIDES.map((s, i) => (
           <div
             key={i}
-            className={`absolute inset-0 transition-opacity duration-[1500ms] ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 transition-opacity duration-1500 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
           >
             <Image src={s.image} alt={s.title} fill className="object-cover object-center" priority={i === 0} />
           </div>
@@ -219,32 +220,32 @@ export default function Home() {
         {/* Content */}
         <div className="relative z-10 max-w-[1440px] mx-auto px-4 md:px-16 w-full py-20">
           <div key={currentSlide} className="max-w-xl" style={{ animation: "heroFadeIn 0.65s ease-out forwards" }}>
-            <span className="inline-block bg-[#111] text-white px-4 py-1.5 text-[10px] font-black tracking-[0.15em] uppercase mb-5">
+            <span className="inline-block bg-[#111] text-white px-4 py-1.5 text-xs font-semibold mb-5">
               {slide.tag}
             </span>
-            <h1 className="text-5xl md:text-[72px] font-black text-[#111] leading-[1.0] tracking-tight mb-4">
+            <h1 className="text-5xl md:text-[72px] font-bold text-[#111] leading-[1.0] tracking-tight mb-4">
               {slide.title}
             </h1>
             <p className="text-base text-[#555] mb-3 max-w-md leading-relaxed font-medium">
               {slide.subtitle}
             </p>
-            <div className="text-[28px] font-black text-[#111] mb-8">{slide.price}</div>
+            <div className="text-[28px] font-bold text-[#111] mb-8">{slide.price}</div>
 
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/games"
-                className="inline-flex items-center gap-2 bg-[#111] text-white px-8 py-4 text-[11px] font-black tracking-[0.1em] uppercase no-underline border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 active:scale-[0.98]"
+                className="inline-flex items-center gap-2 bg-[#111] text-white px-8 py-4 text-xs font-bold no-underline border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 active:scale-[0.98]"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
                   <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3zm-3 8.25a3 3 0 106 0v.75a.75.75 0 01-1.5 0v-.75a1.5 1.5 0 00-3 0v.75a.75.75 0 01-1.5 0v-.75z" clipRule="evenodd" />
                 </svg>
-                SHOP NOW
+                Shop Now
               </Link>
               <Link
                 href="#collections"
-                className="inline-flex items-center gap-2 px-8 py-4 text-[11px] font-black tracking-[0.1em] uppercase text-[#111] border-2 border-[#111] no-underline hover:bg-[#111] hover:text-white transition-all duration-150 active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-8 py-4 text-xs font-bold text-[#111] border-2 border-[#111] no-underline hover:bg-[#111] hover:text-white transition-all duration-150 active:scale-[0.98]"
               >
-                BROWSE CATALOG
+                Browse Catalog
               </Link>
             </div>
           </div>
@@ -268,7 +269,7 @@ export default function Home() {
           {[0, 1].map((r) => (
             <div key={r} className="flex shrink-0">
               {["OFFICIAL GAMES", "LIFETIME ACCESS", "DIRECT DOWNLOADS", "INSTALL GUIDES", "HOME DELIVERY", "24/7 SUPPORT", "PAYSTACK SECURE", "NIGERIA'S #1 GAME STORE"].map((item, i) => (
-                <span key={i} className="inline-flex items-center gap-5 px-6 text-[10px] font-black tracking-[0.16em] uppercase">
+                <span key={i} className="inline-flex items-center gap-5 px-6 text-xs font-semibold tracking-[0.12em] uppercase">
                   <span className="w-1 h-1 rounded-full bg-white/30 shrink-0" />
                   {item}
                 </span>
@@ -288,8 +289,8 @@ export default function Home() {
                   {f.icon}
                 </div>
                 <div>
-                  <p className="text-[11px] font-black tracking-[0.1em] uppercase text-[#111]">{f.title}</p>
-                  <p className="text-[11px] text-[#999] mt-0.5">{f.desc}</p>
+                  <p className="text-sm font-bold text-[#111]">{f.title}</p>
+                  <p className="text-xs font-medium text-[#999] mt-0.5">{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -305,7 +306,7 @@ export default function Home() {
               <div className="h-6 w-48 bg-black/6 animate-pulse rounded-sm" />
               <div className="h-3 w-32 bg-black/4 animate-pulse rounded-sm mt-2" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="bg-white border border-[#e5e5e5]" style={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,0.04)" }}>
                   <div className="aspect-[3/4] bg-[#f0f0f0] animate-pulse" />
@@ -331,9 +332,9 @@ export default function Home() {
         <div className="max-w-[1440px] mx-auto px-4 md:px-16">
           {/* Header */}
           <div className="flex justify-between items-end border-b border-black/10 pb-4 mb-8">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-[#111] uppercase">Browse by Category</h2>
-            <Link href="/games" className="hidden md:block text-[11px] font-black text-[#111] uppercase tracking-[0.08em] hover:opacity-50 transition-opacity no-underline">
-              All Products →
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#111]">Browse by Category</h2>
+            <Link href="/games" className="hidden md:block text-xs font-semibold text-[#111] hover:opacity-50 transition-opacity no-underline">
+              View all →
             </Link>
           </div>
 
@@ -351,14 +352,14 @@ export default function Home() {
                 style={cat.dark ? {} : { boxShadow: "4px 4px 0px 0px rgba(0,0,0,0.04)" }}
               >
                 <div className="p-5">
-                  <h3 className={`text-base font-black uppercase tracking-tight ${cat.dark ? "text-white" : "text-[#111]"}`}>
+                  <h3 className={`text-base font-bold tracking-tight ${cat.dark ? "text-white" : "text-[#111]"}`}>
                     {cat.name}
                   </h3>
-                  <p className={`text-[11px] font-semibold mt-0.5 ${cat.dark ? "text-white/50" : "text-[#999]"}`}>
+                  <p className={`text-xs font-medium mt-0.5 ${cat.dark ? "text-white/50" : "text-[#999]"}`}>
                     {cat.sub}
                   </p>
-                  <p className={`cat-label-arrow text-[10px] font-black uppercase tracking-[0.08em] mt-3 ${cat.dark ? "text-white/60" : "text-[#111]/60"}`}>
-                    SHOP NOW →
+                  <p className={`cat-label-arrow text-xs font-semibold mt-3 ${cat.dark ? "text-white/60" : "text-[#111]/60"}`}>
+                    Shop Now →
                   </p>
                 </div>
               </Link>
@@ -371,16 +372,16 @@ export default function Home() {
       <section className="bg-white border-b border-black/8 py-16">
         <div className="max-w-[1440px] mx-auto px-4 md:px-16">
           <div className="text-center mb-12">
-            <p className="text-[10px] font-black tracking-[0.18em] uppercase text-[#bbb] mb-2">Our Promise</p>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-[#111] uppercase">Why Choose Gamestacks?</h2>
+            <p className="text-xs font-medium text-[#999] mb-2">Our Promise</p>
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#111]">Why Choose Gamestacks?</h2>
           </div>
           {/* 3 bordered panels */}
           <div className="grid sm:grid-cols-3 border border-black/10 divide-y sm:divide-y-0 sm:divide-x divide-black/10">
             {WHY_US.map((item, i) => (
               <div key={i} className="group p-8 md:p-10 hover:bg-[#111] transition-colors duration-200 cursor-default">
                 <span className="text-3xl mb-5 block">{item.icon}</span>
-                <h3 className="font-black text-sm uppercase tracking-tight text-[#111] mb-2 group-hover:text-white transition-colors">{item.title}</h3>
-                <p className="text-[13px] leading-relaxed text-[#888] group-hover:text-white/60 transition-colors">{item.desc}</p>
+                <h3 className="font-bold text-sm tracking-tight text-[#111] mb-2 group-hover:text-white transition-colors">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#6b6b6b] group-hover:text-white/60 transition-colors">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -393,9 +394,9 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             {/* Left text */}
             <div>
-              <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/30 mb-4">Premium Gaming Marketplace</p>
-              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-[1.0] mb-6">
-                YOUR GAME,<br />YOUR RULES.
+              <p className="text-xs font-medium text-white/30 mb-4">Premium Gaming Marketplace</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.0] mb-6">
+                Your Game,<br />Your Rules.
               </h2>
               <p className="text-sm text-white/50 mb-10 max-w-md leading-relaxed">
                 Join thousands of Nigerian gamers who trust Gamestacks for fast, affordable, and authentic game keys delivered instantly.
@@ -403,15 +404,15 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/games"
-                  className="inline-flex items-center gap-2 bg-white text-[#111] px-8 py-4 text-[11px] font-black tracking-[0.1em] uppercase no-underline hover:bg-[#f5f5f5] transition-all duration-150 active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 bg-white text-[#111] px-8 py-4 text-xs font-bold no-underline hover:bg-[#f5f5f5] transition-all duration-150 active:scale-[0.98]"
                 >
-                  EXPLORE ALL GAMES →
+                  Explore All Games →
                 </Link>
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-8 py-4 text-[11px] font-black tracking-[0.1em] uppercase no-underline hover:border-white hover:bg-white hover:text-[#111] transition-all duration-150 active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-8 py-4 text-xs font-bold no-underline hover:border-white hover:bg-white hover:text-[#111] transition-all duration-150 active:scale-[0.98]"
                 >
-                  CREATE ACCOUNT
+                  Create Account
                 </Link>
               </div>
             </div>
@@ -420,8 +421,8 @@ export default function Home() {
             <div className="hidden md:grid grid-cols-2 gap-px bg-white/10">
               {STATS.map((stat, i) => (
                 <div key={i} className="bg-[#111] p-8 hover:bg-white/5 transition-colors cursor-default">
-                  <div className="text-3xl font-black text-white mb-1">{stat.value}</div>
-                  <div className="text-[10px] font-bold tracking-[0.12em] uppercase text-white/30">{stat.label}</div>
+                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-xs font-medium text-white/30">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -430,104 +431,7 @@ export default function Home() {
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-black/8">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-2.5 mb-4">
-                <svg width="28" height="28" viewBox="0 0 34 34" fill="none">
-                  <rect width="34" height="34" rx="8" fill="#111111"/>
-                  <rect x="5.5" y="13.5" width="5" height="7" rx="1.2" fill="white"/>
-                  <rect x="14.5" y="13.5" width="5" height="7" rx="1.2" fill="white"/>
-                  <rect x="8.5" y="10.5" width="7" height="5" rx="1.2" fill="white"/>
-                  <rect x="8.5" y="18.5" width="7" height="5" rx="1.2" fill="white"/>
-                  <circle cx="25.5" cy="13" r="2" fill="white"/>
-                  <circle cx="28.5" cy="17" r="2" fill="white"/>
-                  <circle cx="25.5" cy="21" r="2" fill="white"/>
-                  <circle cx="22.5" cy="17" r="2" fill="white"/>
-                </svg>
-                <span className="text-[13px] font-black tracking-[0.12em] text-[#111] uppercase">GAMESTACKS</span>
-              </div>
-              <p className="text-[13px] text-[#999] leading-relaxed mb-6 max-w-[200px]">
-                Nigeria's premium destination for PC games and gaming accessories.
-              </p>
-              <div className="flex gap-2">
-                {[
-                  <svg key="web" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"/></svg>,
-                  <svg key="email" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>,
-                  <svg key="phone" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>,
-                ].map((icon, idx) => (
-                  <a key={idx} href="#" className="w-8 h-8 flex items-center justify-center border border-black/10 text-[#999] hover:text-[#111] hover:border-[#111] transition-all">
-                    {icon}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Shop */}
-            <div>
-              <h4 className="text-[10px] font-black tracking-[0.14em] uppercase text-[#111] mb-5">Shop</h4>
-              <ul className="space-y-3">
-                {[
-                  ["All Games",    "/games"],
-                  ["New Releases", "/games?collection=new-releases"],
-                  ["Best Sellers", "/games?collection=best-sellers"],
-                  ["PC Offline",   "/games?category=PC+Offline"],
-                  ["PlayStation",  "/games?category=PlayStation"],
-                  ["Gamepads",     "/games?category=Gamepads"],
-                ].map(([label, href]) => (
-                  <li key={href}>
-                    <Link href={href} className="text-[13px] text-[#888] hover:text-[#111] transition-colors no-underline font-medium">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h4 className="text-[10px] font-black tracking-[0.14em] uppercase text-[#111] mb-5">Support</h4>
-              <ul className="space-y-3">
-                {["Help Center", "Contact Us", "Shipping Policy", "Returns & Refunds", "Privacy Policy", "Terms of Service"].map((label) => (
-                  <li key={label}>
-                    <a href="#" className="text-[13px] text-[#888] hover:text-[#111] transition-colors no-underline font-medium">
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Newsletter */}
-            <div>
-              <h4 className="text-[10px] font-black tracking-[0.14em] uppercase text-[#111] mb-5">Newsletter</h4>
-              <p className="text-[13px] text-[#999] mb-5 leading-relaxed">Get the latest drops and exclusive deals in your inbox.</p>
-              <div className="flex border border-black/15 focus-within:border-[#111] transition-colors">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="bg-transparent border-none outline-none text-[13px] text-[#111] placeholder-[#ccc] px-3 py-3 flex-1 min-w-0 font-medium"
-                />
-                <button className="bg-[#111] text-white px-4 text-sm font-black hover:bg-black transition-colors cursor-pointer border-none">
-                  →
-                </button>
-              </div>
-              <p className="text-[11px] text-[#ccc] mt-2">No spam. Unsubscribe anytime.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="border-t border-black/8">
-          <div className="max-w-[1440px] mx-auto px-4 md:px-16 py-5 flex flex-col md:flex-row items-center justify-between gap-3">
-            <span className="text-[11px] text-[#bbb] font-medium tracking-wide">© 2026 GAMESTACKS NIGERIA. ALL RIGHTS RESERVED.</span>
-            <span className="text-[11px] text-[#bbb] font-medium">MADE WITH ❤️ FOR NIGERIAN GAMERS</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

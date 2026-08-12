@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveCategoryFilter } from "@/lib/catalog";
 
 // ---------------------------------------------------------------------------
 // Collection query logic
@@ -147,7 +148,10 @@ export async function GET(request: NextRequest) {
       OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
     };
 
-    if (category) baseWhere.category = category;
+    if (category) {
+      const resolved = resolveCategoryFilter(category);
+      if (resolved) baseWhere.category = resolved;
+    }
     if (itemType) baseWhere.itemType = itemType;
     if (genre) baseWhere.genres = { has: genre };
 

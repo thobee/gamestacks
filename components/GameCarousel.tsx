@@ -72,14 +72,14 @@ export function GameCarousel({
       <div className="relative z-10 flex h-full flex-col justify-center px-8 md:px-16 max-w-xl">
         {/* Trending badge */}
         <div className="mb-4">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-black">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-black">
             <span className="h-1.5 w-1.5 rounded-full bg-black" />
             Trending Now
           </span>
         </div>
 
         {/* Title */}
-        <h1 className="mb-3 text-4xl font-black leading-tight text-white md:text-5xl">
+        <h1 className="mb-3 text-4xl font-bold leading-tight text-white md:text-5xl">
           {game.title}
         </h1>
 
@@ -96,14 +96,14 @@ export function GameCarousel({
                 {formatNaira(game.originalPriceNaira)}
               </p>
             )}
-            <p className="text-2xl font-black text-yellow-400">
+            <p className="text-2xl font-bold text-yellow-400">
               {formatNaira(game.priceNaira)}
             </p>
           </div>
           {onAddToCart && (
             <button
               onClick={() => onAddToCart(game)}
-              className="rounded-full bg-yellow-400 px-8 py-3 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-yellow-300 active:scale-95"
+              className="rounded-full bg-yellow-400 px-8 py-3 text-xs font-bold text-black transition-all hover:bg-yellow-300 active:scale-95"
             >
               Buy Now
             </button>

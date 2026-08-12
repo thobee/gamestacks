@@ -56,10 +56,12 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotalPrice: () => {
-        return get().items.reduce(
-          (total, item) => total + item.game.priceNaira,
-          0,
-        );
+        return get().items.reduce((total, item) => {
+          const price = item.game.priceNaira;
+          const sale = item.game.salePrice;
+          const effective = (sale != null && sale > 0 && sale < price) ? sale : price;
+          return total + effective;
+        }, 0);
       },
 
       getItemCount: () => {

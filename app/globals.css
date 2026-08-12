@@ -4,8 +4,22 @@
 :root {
   --background: #f8f9fa;
   --foreground: #191c1d;
+  --surface: #f8f9fa;
+  --surface-lowest: #ffffff;
+  --surface-low: #f3f4f5;
+  --surface-container: #edeeef;
+  --surface-high: #e7e8e9;
+  --surface-variant: #e1e3e4;
+  --outline-variant: #cfc4c5;
+  --on-surface: #191c1d;
+  --on-surface-variant: #4c4546;
+  --secondary: #5e5e5e;
+  --primary: #000000;
+  --error: #ba1a1a;
   --font-display: 'Hanken Grotesk', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --architectural-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.05);
+  --architectural-shadow-lg: 8px 8px 0px 0px rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
@@ -40,3 +54,78 @@ input:focus-visible {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+/* ── Kinetic Noir (admin + dashboard) ─────────────────────────── */
+.font-label-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.architectural-shadow {
+  box-shadow: var(--architectural-shadow);
+}
+
+.architectural-shadow-lg {
+  box-shadow: var(--architectural-shadow-lg);
+}
+
+.noir-card {
+  background: var(--surface-lowest);
+  border: 1px solid var(--outline-variant);
+  box-shadow: var(--architectural-shadow);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.noir-card:hover {
+  border-color: #000;
+}
+
+.noir-card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--architectural-shadow-lg);
+}
+
+.noir-btn-primary {
+  background: #000;
+  color: #fff;
+  border: 1px solid #000;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.noir-btn-primary:hover {
+  background: #fff;
+  color: #000;
+}
+
+.noir-btn-outline {
+  background: transparent;
+  color: #191c1d;
+  border: 1px solid var(--outline-variant);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.noir-btn-outline:hover {
+  background: var(--surface-variant);
+}
+
+.noir-table-head {
+  background: #000;
+  color: #fff;
+}
+
+.noir-table-head th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

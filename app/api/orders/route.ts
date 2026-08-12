@@ -11,8 +11,13 @@ export async function GET(request: NextRequest) {
 
     if (!token || !token.id) {
       return NextResponse.json(
-        { error: { code: "UNAUTHENTICATED", message: "You must be signed in to view your orders." } },
-        { status: 401 }
+        {
+          error: {
+            code: "UNAUTHENTICATED",
+            message: "You must be signed in to view your orders.",
+          },
+        },
+        { status: 401 },
       );
     }
 
@@ -36,8 +41,36 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        orderId: {
+          in: orders.map((o) => o.id),
+        },
+      },
+      select: {
+        orderId: true,
+        paystackReference: true,
+        paymentMethod: true,
+        status: true,
+        paidAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const txnByOrder = new Map<string, (typeof transactions)[number]>();
+    for (const txn of transactions) {
+      if (!txnByOrder.has(txn.orderId)) txnByOrder.set(txn.orderId, txn);
+    }
+
     // Map orders to camelCase/snake_case structures for frontend compatibility
     const mappedOrders = orders.map((order) => ({
+      receipt: {
+        reference: txnByOrder.get(order.id)?.paystackReference || null,
+        payment_method: txnByOrder.get(order.id)?.paymentMethod || null,
+        payment_status: txnByOrder.get(order.id)?.status || order.status,
+        paid_at: txnByOrder.get(order.id)?.paidAt || null,
+      },
       id: order.id,
       order_number: order.orderNumber,
       items_count: order.itemsCount,
@@ -65,8 +98,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Fetch orders API error:", error);
     return NextResponse.json(
-      { error: { code: "ORDERS_FETCH_ERROR", message: "Failed to fetch orders." } },
-      { status: 500 }
+      {
+        error: {
+          code: "ORDERS_FETCH_ERROR",
+          message: "Failed to fetch orders.",
+        },
+      },
+      { status: 500 },
     );
   }
 }

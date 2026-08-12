@@ -6,6 +6,8 @@ import { Game } from "@/lib/types";
 
 interface UseGamesOptions {
   category?: string;
+  genre?: string;
+  collection?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
@@ -36,7 +38,9 @@ export function useGames(options: UseGamesOptions = {}) {
         setError(null);
 
         const params = new URLSearchParams();
+        if (options.collection) params.append("collection", options.collection);
         if (options.category) params.append("category", options.category);
+        if (options.genre) params.append("genre", options.genre);
         if (options.minPrice)
           params.append("minPrice", options.minPrice.toString());
         if (options.maxPrice)
@@ -68,7 +72,9 @@ export function useGames(options: UseGamesOptions = {}) {
 
     fetchGames();
   }, [
+    options.collection,
     options.category,
+    options.genre,
     options.minPrice,
     options.maxPrice,
     options.sortBy,

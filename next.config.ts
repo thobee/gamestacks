@@ -36,12 +36,14 @@ const nextConfig: NextConfig = {
             : "script-src 'self' https://js.paystack.co",
           // Styles: self + inline
           "style-src 'self' 'unsafe-inline'",
-          // Images: self + data URIs + Supabase + Cloudinary
-          "img-src 'self' data: blob: https://*.supabase.co https://res.cloudinary.com",
+          // Images: self + data URIs + Supabase + Cloudinary + YouTube thumbs
+          "img-src 'self' data: blob: https://*.supabase.co https://res.cloudinary.com https://i.ytimg.com https://*.ytimg.com",
           // Fonts: self + Google Fonts
           "font-src 'self' https://fonts.gstatic.com",
-          // Allow Paystack checkout popup/redirect target
-          "frame-src https://checkout.paystack.com",
+          // Paystack checkout + YouTube video embeds on product pages
+          "frame-src https://checkout.paystack.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com",
+          // Media (direct MP4 previews, etc.)
+          "media-src 'self' blob: https:",
           // Restrict what can embed this site
           "frame-ancestors 'self' https://checkout.paystack.com",
         ].join("; "),

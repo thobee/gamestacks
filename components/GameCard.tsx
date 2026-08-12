@@ -15,10 +15,20 @@ interface GameCardProps {
 }
 
 function GameCardComponent({ game, onAddToCart, variant = "grid" }: GameCardProps) {
-  const displayPrice = game.salePrice ?? game.priceNaira;
-  const hasDiscount = game.salePrice != null && game.salePrice < game.priceNaira;
+  // Defensive coercion — raw API data may use snake_case or be missing fields
+  const priceNaira   = Number((game as any).priceNaira ?? (game as any).price_naira ?? 0);
+  const salePrice    = game.salePrice != null ? Number(game.salePrice) : null;
+  const discountPct  = Number(game.discountPercentage ?? 0);
 
-  const badgeText = game.category || "PC OFFLINE";
+  const displayPrice = salePrice ?? priceNaira;
+  const hasDiscount  = salePrice != null && salePrice < priceNaira;
+
+  const rawCategory = game.category || "PC";
+  // Legacy store categories — display as PC on cards
+  const badgeText =
+    rawCategory === "PC Offline" || rawCategory === "PC Online"
+      ? "PC"
+      : rawCategory;
 
   // Derive genres/tags to display (max 2)
   const genres: string[] = Array.isArray((game as any).genres)
@@ -42,14 +52,14 @@ function GameCardComponent({ game, onAddToCart, variant = "grid" }: GameCardProp
           />
 
           {/* Category badge — top left */}
-          <span className="absolute top-3 left-3 bg-[#111] text-white text-[9px] font-black uppercase tracking-[0.1em] px-2 py-1">
-            {badgeText.toUpperCase()}
+          <span className="absolute top-3 left-3 bg-[#111] text-white text-[10px] font-semibold px-2 py-1">
+            {badgeText}
           </span>
 
           {/* Discount badge — top right */}
-          {hasDiscount && game.discountPercentage > 0 && (
-            <span className="absolute top-3 right-3 bg-white text-[#111] text-[9px] font-black uppercase tracking-[0.08em] px-2 py-1 border border-[#111]">
-              -{game.discountPercentage}%
+          {hasDiscount && discountPct > 0 && (
+            <span className="absolute top-3 right-3 bg-white text-[#111] text-[10px] font-semibold px-2 py-1 border border-[#111]">
+              -{discountPct}%
             </span>
           )}
 
@@ -58,14 +68,14 @@ function GameCardComponent({ game, onAddToCart, variant = "grid" }: GameCardProp
         </div>
 
         {/* ── Info area ── */}
-        <div className="flex flex-col flex-1 p-3">
+        <div className="flex flex-col flex-1 p-2">
           {/* Genre tags */}
           {genres.length > 0 && (
-            <div className="flex gap-1.5 mb-2 flex-wrap">
+            <div className="flex gap-1 mb-1 flex-wrap">
               {genres.map((g) => (
                 <span
                   key={g}
-                  className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#888]"
+                  className="text-[10px] font-medium text-[#888]"
                 >
                   {g}
                 </span>
@@ -74,18 +84,18 @@ function GameCardComponent({ game, onAddToCart, variant = "grid" }: GameCardProp
           )}
 
           {/* Title */}
-          <h3 className="text-[13px] font-black text-[#111] leading-snug tracking-tight group-hover:underline underline-offset-2 mb-3 line-clamp-2">
+          <h3 className="text-sm font-bold text-[#111] leading-snug tracking-tight group-hover:underline underline-offset-2 mb-2 line-clamp-2">
             {game.title}
           </h3>
 
           {/* Price */}
-          <div className="flex items-end gap-2 mt-auto mb-3">
-            <span className="text-[17px] font-black text-[#111] leading-none">
+          <div className="flex items-end gap-1.5 mt-auto mb-2">
+            <span className="text-[13px] font-bold text-[#111] leading-none">
               {formatNaira(displayPrice)}
             </span>
             {hasDiscount && (
-              <span className="text-[11px] text-[#bbb] line-through leading-none mb-px">
-                {formatNaira(game.priceNaira)}
+              <span className="text-[10px] text-[#bbb] line-through leading-none mb-px">
+                {formatNaira(priceNaira)}
               </span>
             )}
           </div>
@@ -100,16 +110,16 @@ function GameCardComponent({ game, onAddToCart, variant = "grid" }: GameCardProp
             e.stopPropagation();
             onAddToCart(game);
           }}
-          className="w-full bg-[#111] text-white text-[11px] font-black uppercase tracking-[0.1em] py-3 border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 cursor-pointer"
+          className="w-full bg-[#111] text-white text-xs font-bold py-2 border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 cursor-pointer"
         >
-          ADD TO CART
+          Add to Cart
         </button>
       ) : (
         <Link
           href={`/games/${game.slug}`}
-          className="block w-full bg-[#111] text-white text-[11px] font-black uppercase tracking-[0.1em] py-3 border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 text-center no-underline"
+          className="block w-full bg-[#111] text-white text-xs font-bold py-2 border-2 border-[#111] hover:bg-white hover:text-[#111] transition-all duration-150 text-center no-underline"
         >
-          VIEW GAME
+          View Game
         </Link>
       )}
     </div>

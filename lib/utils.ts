@@ -8,6 +8,27 @@ export function formatNaira(amount: number): string {
 }
 
 /**
+ * Discount % from regular price → sale price.
+ * Returns 0 if sale is missing or not actually cheaper.
+ */
+export function calcDiscountPercentage(
+  price: number,
+  salePrice: number | null | undefined,
+): number {
+  if (
+    salePrice == null ||
+    !Number.isFinite(price) ||
+    !Number.isFinite(salePrice) ||
+    price <= 0 ||
+    salePrice <= 0 ||
+    salePrice >= price
+  ) {
+    return 0;
+  }
+  return Math.round(((price - salePrice) / price) * 100);
+}
+
+/**
  * Convert Naira to Kobo (Paystack uses kobo)
  * 1 Naira = 100 Kobo
  * @param naira Amount in Naira

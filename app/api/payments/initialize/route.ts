@@ -93,12 +93,13 @@ export async function POST(request: NextRequest) {
     const games = await prisma.game.findMany({
       where: {
         id: { in: gameIds },
-        OR: [ { deletedAt: null }, { deletedAt: { isSet: false } } ],
+        OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
       },
       select: {
         id: true,
         title: true,
         priceNaira: true,
+        salePrice: true,
         isPublished: true,
       },
     });
@@ -129,7 +130,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Calculate totals server-side ────────────────────────────────────────
-    const subtotalNaira = games.reduce((sum, g) => sum + g.priceNaira, 0);
+    const subtotalNaira = games.reduce(
+      (sum, g) => sum + (g.salePrice ?? g.priceNaira),
+      0,
+    );
     const transactionFeeNaira = 0;
     const totalNaira = subtotalNaira + transactionFeeNaira;
 
@@ -171,7 +175,7 @@ export async function POST(request: NextRequest) {
           create: games.map((g) => ({
             gameId: g.id,
             gameTitle: g.title,
-            priceAtPurchase: g.priceNaira,
+            priceAtPurchase: g.salePrice ?? g.priceNaira,
           })),
         },
       },
